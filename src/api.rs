@@ -131,3 +131,94 @@ pub trait GoBot {
         Err(NotImplemented)
     }
 }
+
+// Vertex implementation for messing with strings
+impl Vertex {
+    #[allow(dead_code)]
+    pub fn from_coords(x: u8, y:u8) -> Vertex {
+        if x == 0 || x > 25 || y == 0 || y > 25 {
+            fail!("Vertex coordinates must be in 1-25.");
+        }
+        Vertex{x: x, y: y}
+    }
+
+    #[allow(dead_code)]
+    pub fn from_str(text: &str) -> Vertex {
+        if text.len() < 2 || text.len() > 3 {
+            fail!("Invalid text coordinates.");
+        }
+        let mut x: u8 = text[0];
+        if x < ('A' as u8) || x > ('Z' as u8) || (x as char) == 'I' {
+            fail!("Invalid text coordinates.");
+        }
+        x -= ('A' as u8) - 1;
+        if x > 9 {
+            x -= 1;
+        } // eliminate 'I'
+        let number = ::std::u8::parse_bytes(text.as_bytes().slice_from(1), 10);
+        let mut y: u8 = 0;
+        match number {
+            Some(num) => y = num,
+            _ => (),
+        }
+        if y == 0 || y > 25 {
+            fail!("Invalid text coordinates.");
+        }
+        Vertex{x: x, y: y}
+    }
+
+    #[allow(dead_code)]
+    pub fn to_coords(&self) -> (u8, u8) {
+        (self.x, self.y)
+    }
+
+    #[allow(dead_code)]
+    pub fn to_string(&self) -> String {
+        let mut letter: u8 = 'A' as u8;
+        if self.x >= 9 {
+            // eliminate 'I'
+            letter += self.x;
+        } else {
+            letter += self.x-1;
+        }
+        format!("{:c}{:u}", letter as char, self.y)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn vertex_to_string() {
+        let vrtx1 = super::Vertex::from_coords(8u8, 7u8);
+        assert_eq!(vrtx1.to_string().as_slice(), "H7");
+        let vrtx2 = super::Vertex::from_coords(9u8, 13u8);
+        assert_eq!(vrtx2.to_string().as_slice(), "J13");
+        let vrtx3 = super::Vertex::from_coords(19u8, 1u8);
+        assert_eq!(vrtx3.to_string().as_slice(), "T1");
+    }
+
+    #[test]
+    fn string_to_vertex() {
+        let vrtx1 = super::Vertex::from_str("C7");
+        assert_eq!(vrtx1.to_coords(), (3u8, 7u8));
+        let vrtx2 = super::Vertex::from_str("J11");
+        assert_eq!(vrtx2.to_coords(), (9u8, 11u8));
+        let vrtx3 = super::Vertex::from_str("Z25");
+        assert_eq!(vrtx3.to_coords(), (25u8, 25u8));
+    }
+
+    #[test]
+    #[should_fail]
+    fn too_big_coordinates() {
+        let vrtx = super::Vertex::from_coords(26u8, 13u8);
+        assert_eq!(vrtx.to_coords(), (26u8, 13u8));
+    }
+
+    #[test]
+    #[should_fail]
+    fn invalid_string() {
+        let vrtx = super::Vertex::from_str("I13");
+        assert_eq!(vrtx.to_coords(), (9u8, 13u8));
+    }
+
+}

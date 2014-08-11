@@ -14,8 +14,8 @@ pub enum Colour {
 
 #[allow(dead_code)]
 pub struct Vertex {
-    x: int, // letter
-    y: int  // number
+    x: u8, // letter
+    y: u8  // number
 }
 
 pub enum Move {
@@ -50,37 +50,38 @@ pub trait GoBot {
     // Basic functions, must be implemented
 
     // clear_board : clears the board, can never fail
-    fn gtp_clear_board(&self) -> ();
+    fn gtp_clear_board(&mut self) -> ();
     // komi : sets the komi, can never fail, must accept absurd values
-    fn gtp_komi(&self, komi: f32) -> ();
+    fn gtp_komi(&mut self, komi: f32) -> ();
     // boardsize : sets the board size.
     // Returns InvalidBoardSize if the size is not supported.
-    fn gtp_boardsize(&self, size: uint) -> Result<(), GTPError>;
+    fn gtp_boardsize(&mut self, size: uint) -> Result<(), GTPError>;
     // play : plays the provided move on the board
     // Returns InvalidMove is the move is invalid
-    fn gtp_play(&self, move: ColouredMove) -> Result<(), GTPError>;
+    fn gtp_play(&mut self, move: ColouredMove) -> Result<(), GTPError>;
     // genmove : ask the bot for a move of the chosen color
     // cannot fail, the bot must provide a move even if the last
     // played move is of the same colour
-    fn gtp_genmove(&self, player: Colour) -> Move;
+    // plays the move as well
+    fn gtp_genmove(&mut self, player: Colour) -> Move;
 
     // Optional functions, if not iplemented, the corresponding
     // commands will not be activated
     // All these functions will be called once by the framework
     // at startup, then clear_board will be called
 
-    // genmove_determinisic : like genmove, but must be deterministic
-    // if genmove is already deterministic, can be aliased to it
+    // genmove_regression : like genmove, but must be deterministic
+    // and must not actually play the move
     // should always return Ok(Move), never raise any error
     #[allow(unused_variable)]
-    fn gtp_genmove_deterministic(&self, player: Colour) -> Result<Move, GTPError> {
+    fn gtp_genmove_regression(&self, player: Colour) -> Result<Move, GTPError> {
         Err(NotImplemented)
     }
     // undo : undo last move if possible
     // if not, return Err(CannotUndo)
     // if undo is never possible, should not be implemented
     #[allow(unused_variable)]
-    fn gtp_undo(&self) -> Result<(), GTPError> {
+    fn gtp_undo(&mut self) -> Result<(), GTPError> {
         Err(NotImplemented)
     }
     // place_free_handicap : The bot places its handicap stones
@@ -88,7 +89,7 @@ pub trait GoBot {
     // it can place less stones if the asked number is too high
     // fails with Err(BoardNotEmpty) if board isn't empty
     #[allow(unused_variable)]
-    fn gtp_place_free_handicap(&self, number: uint) -> Result<&[Vertex], GTPError> {
+    fn gtp_place_free_handicap(&mut self, number: uint) -> Result<&[Vertex], GTPError> {
         Err(NotImplemented)
     }
     // set_free_handicap : uses the provided list as handicap stones
@@ -97,7 +98,7 @@ pub trait GoBot {
     // fails woth Err(BadVertexList) if the vertex list is unusable
     // (two stones at the same place, or stones outside the board)
     #[allow(unused_variable)]
-    fn gtp_set_free_handicap(&self, stones: &[Vertex]) -> Result<(), GTPError> {
+    fn gtp_set_free_handicap(&mut self, stones: &[Vertex]) -> Result<(), GTPError> {
         Err(NotImplemented)
     }
     // time_settings : sets the time settings for the game
@@ -105,7 +106,7 @@ pub trait GoBot {
     // but the controller is supposed to enforce it
     // time are give in minute, should never fail
     #[allow(unused_variable)]
-    fn gtp_time_settings(&self, main_time: int, byoyomi_time: int, byoyomi_stones: int) -> Result<(), GTPError> {
+    fn gtp_time_settings(&mut self, main_time: int, byoyomi_time: int, byoyomi_stones: int) -> Result<(), GTPError> {
         Err(NotImplemented)
     }
     // final_status_list : returns a slice to the list of stones of 

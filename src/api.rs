@@ -147,7 +147,7 @@ impl Vertex {
         if text.len() < 2 || text.len() > 3 {
             fail!("Invalid text coordinates.");
         }
-        let mut x: u8 = text[0];
+        let mut x: u8 = text.as_bytes()[0];
         if x < ('A' as u8) || x > ('Z' as u8) || (x as char) == 'I' {
             fail!("Invalid text coordinates.");
         }

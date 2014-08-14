@@ -1,0 +1,5 @@
+[package]
+name = "gtprust"
+version = "0.0.1-pre"
+authors = [ "victor.berger@m4x.org" ]
+

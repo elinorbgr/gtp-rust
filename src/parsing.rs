@@ -1,30 +1,25 @@
 use std::u32;
-use std::string::String;
+use std::vec::Vec;
+use std::ascii::Ascii;
 
 // Strips all ignored content from input string
 // according to specifications of GTPv2
-fn strip_input(input: &str) -> String {
-    let mut output = String::new();
-    let mut last_char = 10 as char; // set initial lastchar as LF
+fn strip_input(input: &[Ascii]) -> Vec<Ascii> {
+    let mut output: Vec<Ascii> = Vec::new();
+    let mut last_char: Ascii = '\n'.to_ascii(); // set initial lastchar as LF
     let mut in_comment = false;
-    for c in input.chars() {
-        if (c as u8) < 9 ||
-           ((c as u8) > 10 && (c as u8) < 32) ||
-           (c as u8) == 127 {
-            // all non printable chars are discarded
-            continue;
-        }
-        if (c as u8) == 10 { // newline
+    for &c in input.iter() {
+        if c == '\n'.to_ascii() { // newline
             in_comment = false;
-            if (last_char as u8) == 10 {
+            if last_char == '\n'.to_ascii() {
                 // ignore multiple newlines
                 continue;
             }
-            last_char = 10 as char;
-            output = output.append((10 as char).to_string().as_slice());
+            last_char = '\n'.to_ascii();
+            output.push('\n'.to_ascii());
             continue;
         }
-        if c == '#' {
+        if c == '#'.to_ascii() {
             in_comment = true;
             continue;
         }
@@ -32,19 +27,23 @@ fn strip_input(input: &str) -> String {
             // we are in a comment, and the caracter did not end it,
             continue;
         }
-        if c == ' ' || (c as u8) == 9 { // space or \t
-            if last_char.is_whitespace() {
+        if c.is_blank() { // space or \t
+            if last_char.to_char().is_whitespace() {
                 // multiple spaces are discarded
                 // as well as spaces in the begining of a line
                 continue;
             }
-            last_char = ' ';
-            output = output.append(' '.to_string().as_slice());
+            last_char = ' '.to_ascii();
+            output.push(' '.to_ascii());
+            continue;
+        }
+        if c.is_control() {
+            // non printable, drop it
             continue;
         }
         // any other character is kept as it
         last_char = c;
-        output = output.append(c.to_string().as_slice());
+        output.push(c);
     }
     output
 }
@@ -52,39 +51,38 @@ fn strip_input(input: &str) -> String {
 #[deriving(PartialEq, Show)]
 pub struct GTPCommand {
     id: Option<u32>,
-    command: String,
-    args: String
+    command: Vec<Ascii>,
+    args: Vec<Ascii>
 }
 
 // parses a command from a line
 // input is suposed to be a single stripped line
 // without trailing \n
-fn parse_command_from_stripped(line: &str) -> Option<GTPCommand> {
-    if line.is_whitespace() {
+fn parse_command_from_stripped(line: &[Ascii]) -> Option<GTPCommand> {
+    if line.as_str_ascii().is_whitespace() {
         // empty line no command to parse
         None
     } else {
-        let mut first_split = line.splitn(1, ' ');
+        let mut first_split = line.splitn(1, |&c| { c == ' '.to_ascii()});
         // there is always a first value
         let first_part = first_split.next().unwrap();
         let mut to_split = match first_split.next() {
             Some(text) => text,
-            _ => ""
+            _ => "".to_ascii()
         };
-        let id = u32::parse_bytes(first_part.as_bytes(), 10);
+        let id = u32::parse_bytes(first_part.as_str_ascii().as_bytes(), 10);
         match id {
             None => { to_split = line; },
             _ => { }
         };
-        let mut second_split = to_split.splitn(1, ' ');
+        let mut second_split = to_split.splitn(1, |&c| { c == ' '.to_ascii()});
         match second_split.next() {
-            Some(text) if text == "" => None,
-            Some(text) => Some(GTPCommand{
+            Some(text) if text.len() > 0 => Some(GTPCommand{
                 id: id,
-                command: String::from_str(text),
+                command: Vec::from_slice(text),
                 args: match second_split.next() {
-                    Some(arguments) => String::from_str(arguments),
-                    _ => String::from_str("")
+                    Some(arguments) => Vec::from_slice(arguments),
+                    _ => Vec::new()
                 }
             }),
             _ => None
@@ -96,8 +94,8 @@ fn parse_command_from_stripped(line: &str) -> Option<GTPCommand> {
 // if inputed several lines, only the first non empty
 // and non comment is parsed
 #[allow(dead_code)]
-pub fn parse_command(input: &str) -> Option<GTPCommand> {
-    match strip_input(input).as_slice().splitn(1, 10 as char).next() {
+pub fn parse_command(input: &[Ascii]) -> Option<GTPCommand> {
+    match strip_input(input).as_slice().splitn(1, |&c| {c == '\n'.to_ascii()}).next() {
         Some(line) => parse_command_from_stripped(line),
         _ => None
     }
@@ -108,54 +106,54 @@ pub fn parse_command(input: &str) -> Option<GTPCommand> {
 mod tests {
     #[test]
     fn strip_input() {
-        let input = "command1 \t and \x15 argu\x07ments\n# this is a comment\ncommand2    !op # comment\n\n\nfoo bar\n\n";
-        let expected_output = "command1 and arguments\ncommand2 !op \nfoo bar\n";
+        let input = "command1 \t and \x15 argu\x07ments\n# this is a comment\n  command2    !op # comment\n\n\nfoo bar\n\n".to_ascii();
+        let expected_output = "command1 and arguments\ncommand2 !op \nfoo bar\n".to_ascii();
         let output = super::strip_input(input);
         assert_eq!(output.as_slice(), expected_output);
     }
 
     #[test]
     fn parse_command_from_stripped() {
-        assert_eq!(super::parse_command_from_stripped(" "), None);
-        assert_eq!(super::parse_command_from_stripped("56"), None);
-        assert_eq!(super::parse_command_from_stripped("foo"), Some(
+        assert_eq!(super::parse_command_from_stripped(" ".to_ascii()), None);
+        assert_eq!(super::parse_command_from_stripped("56".to_ascii()), None);
+        assert_eq!(super::parse_command_from_stripped("foo".to_ascii()), Some(
             super::GTPCommand{
                 id: None,
-                command: String::from_str("foo"),
-                args: String::from_str("")
+                command: Vec::from_slice("foo".to_ascii()),
+                args: Vec::new()
             }));
-        assert_eq!(super::parse_command_from_stripped("foo bar baz"), Some(
+        assert_eq!(super::parse_command_from_stripped("foo bar baz".to_ascii()), Some(
             super::GTPCommand{
                 id: None,
-                command: String::from_str("foo"),
-                args: String::from_str("bar baz")
+                command: Vec::from_slice("foo".to_ascii()),
+                args: Vec::from_slice("bar baz".to_ascii())
             }));
-        assert_eq!(super::parse_command_from_stripped("42 foo"), Some(
+        assert_eq!(super::parse_command_from_stripped("42 foo".to_ascii()), Some(
             super::GTPCommand{
                 id: Some(42u32),
-                command: String::from_str("foo"),
-                args: String::from_str("")
+                command: Vec::from_slice("foo".to_ascii()),
+                args: Vec::from_slice("".to_ascii())
             }));
-        assert_eq!(super::parse_command_from_stripped("42 foo bar baz"), Some(
+        assert_eq!(super::parse_command_from_stripped("42 foo bar baz".to_ascii()), Some(
             super::GTPCommand{
                 id: Some(42u32),
-                command: String::from_str("foo"),
-                args: String::from_str("bar baz")
+                command: Vec::from_slice("foo".to_ascii()),
+                args: Vec::from_slice("bar baz".to_ascii())
             }));
     }
 
     #[test]
     fn parse_command() {
         assert_eq!(
-            super::parse_command("  #  this is a comment\n\t  \n  # this as well"),
+            super::parse_command("  #  this is a comment\n\t  \n  # this as well".to_ascii()),
             None
         );
         assert_eq!(
-            super::parse_command("#this command is really cool\n42 foo Cake is a lie  # cool isn't it ?"),
+            super::parse_command("#this command is really cool\n42 foo Cake is a lie  # cool isn't it ?".to_ascii()),
             Some(super::GTPCommand{
                 id: Some(42u32),
-                command: String::from_str("foo"),
-                args: String::from_str("Cake is a lie ")
+                command: Vec::from_slice("foo".to_ascii()),
+                args: Vec::from_slice("Cake is a lie ".to_ascii())
             })
         );
     }

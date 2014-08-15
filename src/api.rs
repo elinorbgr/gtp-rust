@@ -7,17 +7,20 @@ pub enum GTPError {
     CannotUndo,
 }
 
+#[deriving(PartialEq,Show)]
 pub enum Colour {
     Black,
     White
 }
 
 #[allow(dead_code)]
+#[deriving(PartialEq,Show)]
 pub struct Vertex {
     x: u8, // letter
     y: u8  // number
 }
 
+#[deriving(PartialEq,Show)]
 pub enum Move {
     Stone(Vertex),
     Pass,
@@ -25,11 +28,13 @@ pub enum Move {
 }
 
 #[allow(dead_code)]
+#[deriving(PartialEq,Show)]
 pub struct ColouredMove {
-    player: Colour,
-    move: Move
+    pub player: Colour,
+    pub move: Move
 }
 
+#[deriving(PartialEq,Show)]
 pub enum StoneStatus {
     Alive,
     Seki,

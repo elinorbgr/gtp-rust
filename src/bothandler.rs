@@ -368,16 +368,21 @@ impl BotHandler {
     // will parse and execute the first command encountered only
     // do nothing if no command is found
     #[allow(dead_code)]
-    pub fn handle_command<T: api::GoBot>(&self, bot: &mut T, input: &[Ascii]) -> String {
+    pub fn handle_command<T: api::GoBot>(&self, bot: &mut T, input: &[Ascii]) -> (bool, String) {
         match parsing::parse_command(input) {
             Some(parsing::GTPCommand{id: id, command: command, args: args}) => {
-                let (result, output) = self.dispatch_cmd(bot, command.as_slice(), args.as_slice());
-                format!("{:c}{:s} {:s}",
-                    match result {true => '=', false => '?'},
-                    match id {Some(i) => format!("{:u}", i), _ => String::new()},
-                    output)
+                if command.as_slice().as_str_ascii() == "quit" {
+                    (false, format!("={:s} bye",
+                        match id {Some(i) => format!("{:u}", i), _ => String::new()}))
+                } else {
+                    let (result, output) = self.dispatch_cmd(bot, command.as_slice(), args.as_slice());
+                    (true, format!("{:c}{:s} {:s}",
+                        match result {true => '=', false => '?'},
+                        match id {Some(i) => format!("{:u}", i), _ => String::new()},
+                        output))
+                    }
                 },
-            _ => {String::new()}
+            _ => {(true, String::new())}
         }
     }
 }

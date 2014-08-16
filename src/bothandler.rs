@@ -1,7 +1,7 @@
 use std::ascii::Ascii;
 use std::string::String;
 use api;
-use parsing::{parse_command, GTPCommand};
+use parsing;
 
 // This struct is used to keep a record of which
 // optional commands have been implemented by
@@ -267,8 +267,8 @@ impl BotHandler {
     // do nothing if no command is found
     #[allow(dead_code)]
     pub fn handle_command<T: api::GoBot>(&self, bot: &mut T, input: &[Ascii]) -> String {
-        match parse_command(input) {
-            Some(GTPCommand{id: id, command: command, args: args}) => {
+        match parsing::parse_command(input) {
+            Some(parsing::GTPCommand{id: id, command: command, args: args}) => {
                 let (result, output) = self.dispatch_cmd(bot, command.as_slice(), args.as_slice());
                 format!("{:c}{:s} {:s}",
                     match result {true => '=', false => '?'},

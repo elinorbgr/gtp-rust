@@ -161,7 +161,7 @@ impl Vertex {
         if x > 9 {
             x -= 1;
         } // eliminate 'I'
-        let number = ::std::u8::parse_bytes(text.as_bytes().slice_from(1), 10);
+        let number = from_str::<u8>(text);
         let mut y: u8 = 0;
         match number {
             Some(num) => y = num,

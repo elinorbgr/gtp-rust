@@ -1,4 +1,3 @@
-use std::u32;
 use std::vec::Vec;
 use std::ascii::Ascii;
 use api;
@@ -71,7 +70,7 @@ fn parse_command_from_stripped(line: &[Ascii]) -> Option<GTPCommand> {
             Some(text) => text,
             _ => "".to_ascii()
         };
-        let id = u32::parse_bytes(first_part.as_str_ascii().as_bytes(), 10);
+        let id = from_str::<u32>(first_part.as_str_ascii());
         match id {
             None => { to_split = line; },
             _ => { }
@@ -278,7 +277,7 @@ mod tests {
     }
 
     #[test]
-    fn parse_arsg() {
+    fn parse_args() {
         let arg_string = "W G7 alive black pass E5".to_ascii();
         let arg_types = vec!(
             super::ColouredMoveArg,

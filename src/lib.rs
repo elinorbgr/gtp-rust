@@ -1,6 +1,6 @@
 #![crate_type = "lib"]
 
-mod api;
+pub mod api;
 mod bothandler;
 mod parsing;
 

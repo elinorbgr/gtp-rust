@@ -191,6 +191,34 @@ impl Vertex {
     }
 }
 
+impl Move {
+    #[allow(dead_code)]
+    pub fn to_string(&self) -> String {
+        match *self {
+            Stone(vrtx) => vrtx.to_string(),
+            Pass => String::from_str("pass"),
+            Resign => String::from_str("resign")
+        }
+    }
+}
+
+impl Colour {
+    #[allow(dead_code)]
+    pub fn to_string(&self) -> String {
+        match *self {
+            White => String::from_str("white"),
+            Black => String::from_str("black")
+        }
+    }
+}
+
+impl ColouredMove {
+    #[allow(dead_code)]
+    pub fn to_string(&self) -> String {
+        self.player.to_string().append(self.move.to_string().as_slice())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     #[test]

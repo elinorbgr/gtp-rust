@@ -1,3 +1,5 @@
+use std::vec::Vec;
+
 pub enum GTPError {
     NotImplemented,
     InvalidBoardSize,
@@ -5,6 +7,7 @@ pub enum GTPError {
     BadVertexList,
     BoardNotEmpty,
     CannotUndo,
+    CannotScore,
 }
 
 #[deriving(PartialEq,Show)]
@@ -93,7 +96,7 @@ pub trait GoBot {
     // according to pre-defined patterns, see specification
     // returns a vertex of choosen stones
     #[allow(unused_variable)]
-    fn gtp_fixed_handicap(&mut self, number: uint) -> Result<&[Vertex], GTPError> {
+    fn gtp_fixed_handicap(&mut self, number: uint) -> Result<Vec<Vertex>, GTPError> {
         Err(NotImplemented)
     }
     // place_free_handicap : The bot places its handicap stones
@@ -101,7 +104,7 @@ pub trait GoBot {
     // it can place less stones if the asked number is too high
     // fails with Err(BoardNotEmpty) if board isn't empty
     #[allow(unused_variable)]
-    fn gtp_place_free_handicap(&mut self, number: uint) -> Result<&[Vertex], GTPError> {
+    fn gtp_place_free_handicap(&mut self, number: uint) -> Result<Vec<Vertex>, GTPError> {
         Err(NotImplemented)
     }
     // set_free_handicap : uses the provided list as handicap stones
@@ -125,12 +128,12 @@ pub trait GoBot {
     // any color in the given status, in the opinion of the bot
     // should never fail
     #[allow(unused_variable)]
-    fn gtp_final_status_list(&self, status: StoneStatus) -> Result<(), GTPError> {
+    fn gtp_final_status_list(&self, status: StoneStatus) -> Result<Vec<Vertex>, GTPError> {
         Err(NotImplemented)
     }
     // final_score : computes the bot's calculation of the final score
     // if it is a draw, float value must be 0 and colour is not important
-    // should never fail
+    // can fail with CannotScore
     #[allow(unused_variable)]
     fn gtp_final_score(&self) -> Result<(f32, Colour), GTPError> {
         Err(NotImplemented)

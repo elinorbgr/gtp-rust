@@ -171,7 +171,7 @@ impl Vertex {
         if x > 9 {
             x -= 1;
         } // eliminate 'I'
-        let number = from_str::<u8>(text);
+        let number = from_str::<u8>(text.slice_from(1));
         let mut y: u8 = 0;
         match number {
             Some(num) => y = num,

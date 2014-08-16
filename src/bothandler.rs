@@ -143,23 +143,49 @@ impl BotHandler {
     }
 
     fn cmd_boardsize<T: api::GoBot>(&self, bot: &mut T, args: &[Ascii]) -> (bool, String) {
-        fail!("Not Implemented.");
+        match from_str::<uint>(args.as_str_ascii()) {
+            Some(n) => match bot.gtp_boardsize(n) {
+                Ok(()) => (true, String::new()),
+                Err(api::InvalidBoardSize) => (false, String::from_str("invalid board size")),
+                _ => fail!("Unexpected error in gtp_boardsize.")
+            },
+            None => (false, String::from_str("syntax error"))
+        }
     }
 
     fn cmd_clear_board<T: api::GoBot>(&self, bot: &mut T) -> () {
-        fail!("Not Implemented.");
+        bot.gtp_clear_board();
     }
 
     fn cmd_komi<T: api::GoBot>(&self, bot: &mut T, args: &[Ascii]) -> (bool, String) {
-        fail!("Not Implemented.");
+        match from_str::<f32>(args.as_str_ascii()) {
+            Some(k) => {bot.gtp_komi(k); (true, String::new())},
+            None => (false, String::from_str("syntax error"))
+        }
     }
 
     fn cmd_play<T: api::GoBot>(&self, bot: &mut T, args: &[Ascii]) -> (bool, String) {
-        fail!("Not Implemented.");
+        match parsing::parse_args(args, [parsing::ColouredMoveArg]) {
+            Some(vect) => match vect[0] {
+                parsing::ArgColouredMove(mv) => match bot.gtp_play(mv) {
+                    Ok(()) => (true, String::new()),
+                    Err(api::InvalidMove) => (false, String::from_str("invalid move")),
+                    _ => fail!("Unexpected error in gtp_play.")
+                },
+                _ => unreachable!() // if parse_args returns a vector, it is valid
+            },
+            None => (false, String::from_str("syntax error"))
+        }
     }
 
     fn cmd_genmove<T: api::GoBot>(&self, bot: &mut T, args: &[Ascii]) -> (bool, String) {
-        fail!("Not Implemented.");
+        match parsing::parse_args(args, [parsing::ColourArg]) {
+            Some(vect) => match vect[0] {
+                parsing::ArgColour(col) => (true, bot.gtp_genmove(col).to_string()),
+                _ => unreachable!()
+            },
+            None => (false, String::from_str("syntax error"))
+        }
     }
 
     // optional functions, should not be called
@@ -170,15 +196,52 @@ impl BotHandler {
     }
 
     fn cmd_reg_genmove<T: api::GoBot>(&self, bot: &mut T, args: &[Ascii]) -> (bool, String) {
-        fail!("Not Implemented.");
+        match parsing::parse_args(args, [parsing::ColourArg]) {
+            Some(vect) => match vect[0] {
+                parsing::ArgColour(col) => match bot.gtp_genmove_regression(col) {
+                    Ok(mv) => (true, mv.to_string()),
+                    _ => fail!("Unexpected error in gtp_reg_genmove.")
+                },
+                _ => unreachable!()
+            },
+            None => (false, String::from_str("syntax error"))
+        }
     }
 
     fn cmd_fixed_handicap<T: api::GoBot>(&self, bot: &mut T, args: &[Ascii]) -> (bool, String) {
-        fail!("Not Implemented.");
+        match from_str::<uint>(args.as_str_ascii()) {
+            Some(n) if n >= 2 && n <= 9 => match bot.gtp_fixed_handicap(n) {
+                Ok(vec) => (true, {
+                    let mut it = vec.iter();
+                    let mut out = it.next().to_string();
+                    for &vrtx in it {
+                        out = out.append(" ").append(vrtx.to_string().as_slice());
+                    };
+                    out }),
+                Err(api::BoardNotEmpty) => (false, String::from_str("board not empty")),
+                _ => fail!("Unexpected error in gtp_boardsize.")
+            },
+            Some(_) => (false, String::from_str("invalid number of stones")),
+            None => (false, String::from_str("syntax error"))
+        }
     }
 
     fn cmd_place_free_handicap<T: api::GoBot>(&self, bot: &mut T,  args: &[Ascii]) -> (bool, String) {
-        fail!("Not Implemented.");
+        match from_str::<uint>(args.as_str_ascii()) {
+            Some(n) if n >= 2 => match bot.gtp_place_free_handicap(n) {
+                Ok(vec) => (true, {
+                    let mut it = vec.iter();
+                    let mut out = it.next().to_string();
+                    for &vrtx in it {
+                        out = out.append(" ").append(vrtx.to_string().as_slice());
+                    };
+                    out }),
+                Err(api::BoardNotEmpty) => (false, String::from_str("board not empty")),
+                _ => fail!("Unexpected error in gtp_boardsize.")
+            },
+            Some(_) => (false, String::from_str("invalid number of stones")),
+            None => (false, String::from_str("syntax error"))
+        }
     }
 
     fn cmd_set_free_handicap<T: api::GoBot>(&self, bot: &mut T, args: &[Ascii]) -> (bool, String) {
@@ -186,7 +249,11 @@ impl BotHandler {
     }
 
     fn cmd_undo<T: api::GoBot>(&self, bot: &mut T) -> (bool, String) {
-        fail!("Not Implemented.");
+        match bot.gtp_undo() {
+            Ok(()) => (true, String::new()),
+            Err(api::CannotUndo) => (false, String::from_str("cannot undo")),
+            _ => fail!("Unexpected error in gtp_undo.")
+        }
     }
 
     fn cmd_time_settings<T: api::GoBot>(&self, bot: &mut T, args: &[Ascii]) -> (bool, String) {
@@ -194,11 +261,34 @@ impl BotHandler {
     }
 
     fn cmd_final_status_list<T: api::GoBot>(&self, bot: &mut T, args: &[Ascii]) -> (bool,String) {
-        fail!("Not Implemented.");
+        match parsing::parse_args(args, [parsing::StoneStatusArg]) {
+            Some(vect) => match vect[0] {
+                parsing::ArgStoneStatus(st) => match bot.gtp_final_status_list(st) {
+                    Ok(lst) => {
+                        let mut output = String::new();
+                        for &vrtx in lst.iter() {
+                            output = output.append(vrtx.to_string().as_slice());
+                        }
+                        (true, output)
+                    },
+                    _ => fail!("Unexpected error in gtp_final_status_list.")
+                },
+                _ => unreachable!()
+            },
+            None => (false, String::from_str("syntax error"))
+        }
     }
 
-    fn cmd_final_score<T: api::GoBot>(&self, bot: &mut T, args: &[Ascii]) -> (bool, String) {
-        fail!("Not Implemented.");
+    fn cmd_final_score<T: api::GoBot>(&self, bot: &mut T) -> (bool, String) {
+        match bot.gtp_final_score() {
+            Ok(val) => match val {
+                (0.0, _) => (true, String::from_str("0")),
+                (x, api::White) => (true, format!("w+{}", x)),
+                (x, api::Black) => (true, format!("b+{}", x))
+                },
+            Err(api::CannotScore) => (false, String::from_str("cannot score")),
+            _ => fail!("Unexpected error in gtp_final_score.")
+        }
     }
 
     fn cmd_showboard<T: api::GoBot>(&self, bot: &mut T) -> String {
@@ -256,7 +346,7 @@ impl BotHandler {
                 false => (false, String::from_str("unknown command"))
             },
             "final_score" => match self.final_score {
-                true => self.cmd_final_score(bot, args),
+                true => self.cmd_final_score(bot),
                 false => (false, String::from_str("unknown command"))
             },
             "showboard" => match self.final_status_list {

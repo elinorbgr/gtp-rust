@@ -1,5 +1,10 @@
 [package]
-name = "gtprust"
+name = "GTP-Rust"
 version = "0.0.1-pre"
 authors = [ "victor.berger@m4x.org" ]
 
+[[lib]]
+name = "gtprust"
+
+[[example]]
+name = "dummybot"

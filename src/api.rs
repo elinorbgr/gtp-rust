@@ -16,7 +16,6 @@ pub enum Colour {
     White
 }
 
-#[allow(dead_code)]
 #[deriving(PartialEq,Show)]
 pub struct Vertex {
     x: u8, // letter
@@ -30,7 +29,6 @@ pub enum Move {
     Resign
 }
 
-#[allow(dead_code)]
 #[deriving(PartialEq,Show)]
 pub struct ColouredMove {
     pub player: Colour,
@@ -149,7 +147,6 @@ pub trait GoBot {
 
 // Vertex implementation for messing with strings
 impl Vertex {
-    #[allow(dead_code)]
     pub fn from_coords(x: u8, y:u8) -> Option<Vertex> {
         if x == 0 || x > 25 || y == 0 || y > 25 {
             None
@@ -158,7 +155,6 @@ impl Vertex {
         }
     }
 
-    #[allow(dead_code)]
     pub fn from_str(text: &str) -> Option<Vertex> {
         if text.len() < 2 || text.len() > 3 {
             return None;
@@ -183,12 +179,10 @@ impl Vertex {
         Some(Vertex{x: x, y: y})
     }
 
-    #[allow(dead_code)]
     pub fn to_coords(&self) -> (u8, u8) {
         (self.x, self.y)
     }
 
-    #[allow(dead_code)]
     pub fn to_string(&self) -> String {
         let mut letter: u8 = 'A' as u8;
         if self.x >= 9 {
@@ -202,7 +196,6 @@ impl Vertex {
 }
 
 impl Move {
-    #[allow(dead_code)]
     pub fn to_string(&self) -> String {
         match *self {
             Stone(vrtx) => vrtx.to_string(),
@@ -213,7 +206,6 @@ impl Move {
 }
 
 impl Colour {
-    #[allow(dead_code)]
     pub fn to_string(&self) -> String {
         match *self {
             White => String::from_str("white"),
@@ -223,7 +215,6 @@ impl Colour {
 }
 
 impl ColouredMove {
-    #[allow(dead_code)]
     pub fn to_string(&self) -> String {
         self.player.to_string().append(self.move.to_string().as_slice())
     }

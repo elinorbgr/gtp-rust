@@ -367,7 +367,6 @@ impl BotHandler {
     // handles content from ascii input
     // will parse and execute the first command encountered only
     // do nothing if no command is found
-    #[allow(dead_code)]
     pub fn handle_command<T: api::GoBot>(&self, bot: &mut T, input: &[Ascii]) -> (bool, String) {
         match parsing::parse_command(input) {
             Some(parsing::GTPCommand{id: id, command: command, args: args}) => {

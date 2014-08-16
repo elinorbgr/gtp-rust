@@ -93,7 +93,6 @@ fn parse_command_from_stripped(line: &[Ascii]) -> Option<GTPCommand> {
 // parses a command from a un-stripped line
 // if inputed several lines, only the first non empty
 // and non comment is parsed
-#[allow(dead_code)]
 pub fn parse_command(input: &[Ascii]) -> Option<GTPCommand> {
     match strip_input(input).as_slice().splitn(1, |&c| {c == '\n'.to_ascii()}).next() {
         Some(line) => parse_command_from_stripped(line),
@@ -151,7 +150,6 @@ fn arg_parse_stone_status (input: &[Ascii]) -> Option<api::StoneStatus> {
     }
 }
 
-#[allow(dead_code)]
 pub fn parse_args (input: &[Ascii], types: &[ArgType]) -> Option<Vec<Argument>> {
     let mut args_iter = input.split(|&c| {c == ' '.to_ascii() });
     let mut vect: Vec<Argument> = Vec::new();

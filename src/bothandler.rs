@@ -22,6 +22,7 @@ genmove";
 pub struct BotHandler {
     genmove_regression: bool,
     undo: bool,
+    fixed_handicap: bool,
     place_free_handicap: bool,
     set_free_handicap: bool,
     time_settings: bool,
@@ -35,6 +36,7 @@ impl BotHandler {
         BotHandler{
             genmove_regression: false,
             undo: false,
+            fixed_handicap: false,
             place_free_handicap: false,
             set_free_handicap: false,
             time_settings: false,
@@ -52,6 +54,10 @@ impl BotHandler {
         match bot.gtp_undo() {
             Err(api::NotImplemented) => self.undo = false,
             _ => self.undo = true
+        }
+        match bot.gtp_fixed_handicap(1) {
+            Err(api::NotImplemented) => self.fixed_handicap = false,
+            _ => self.fixed_handicap = true
         }
         match bot.gtp_place_free_handicap(1) {
             Err(api::NotImplemented) => self.place_free_handicap = false,
@@ -86,7 +92,8 @@ impl BotHandler {
     fn cmd_list_commands(&self) -> String {
         let mut list = String::from_str(basic_command_list);
         if self.genmove_regression {
-            list = list.append("\nreg_genmove\nload_sgf");
+            //list = list.append("\nreg_genmove\nload_sgf");
+            list = list.append("\nreg_genmove");
         }
         if self.undo {
             list = list.append("\nundo");
@@ -94,8 +101,11 @@ impl BotHandler {
         if self.place_free_handicap {
             list = list.append("\nplace_free_handicap");
         }
+        if self.fixed_handicap {
+            list = list.append("\nfixed_handicap");
+        }
         if self.set_free_handicap {
-            list = list.append("\nset_free_handicap\nfixed_handicap");
+            list = list.append("\nset_free_handicap");
         }
         if self.time_settings {
             list = list.append("\ntime_settings");
@@ -118,7 +128,9 @@ impl BotHandler {
             "known_command" | "list_commands" | "quit" |
             "boardsize" | "clear_board" | "komi" |
             "play" | "genmove" => true,
-            "reg_genmove" | "load_sgf" => self.genmove_regression,
+            // load_sgf will not be available in a first stage
+            // "reg_genmove" | "load_sgf" => self.genmove_regression,
+            "reg_genmove" => self.genmove_regression,
             "undo" => self.undo,
             "place_free_handicap" => self.place_free_handicap,
             "set_free_handiciap" | "fixed_handicap" => self.set_free_handicap,

@@ -89,6 +89,13 @@ pub trait GoBot {
     fn gtp_undo(&mut self) -> Result<(), GTPError> {
         Err(NotImplemented)
     }
+    // fixed_handicap : The bot places handicap stones for black
+    // according to pre-defined patterns, see specification
+    // returns a vertex of choosen stones
+    #[allow(unused_variable)]
+    fn gtp_fixed_handicap(&mut self, number: uint) -> Result<&[Vertex], GTPError> {
+        Err(NotImplemented)
+    }
     // place_free_handicap : The bot places its handicap stones
     // and returns a slice to a vector of Vertexes
     // it can place less stones if the asked number is too high

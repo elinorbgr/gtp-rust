@@ -51,9 +51,9 @@ fn strip_input(input: &[Ascii]) -> Vec<Ascii> {
 
 #[deriving(PartialEq, Show)]
 pub struct GTPCommand {
-    id: Option<u32>,
-    command: Vec<Ascii>,
-    args: Vec<Ascii>
+    pub id: Option<u32>,
+    pub command: Vec<Ascii>,
+    pub args: Vec<Ascii>
 }
 
 // parses a command from a line

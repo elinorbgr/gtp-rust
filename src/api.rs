@@ -45,9 +45,9 @@ pub trait GoBot {
     // Static functions identifying the bot :
 
     // name (ex : "My super Bot")
-    fn gtp_name() -> &'static str;
+    fn gtp_name(&self) -> String;
     // version (ex : "v2.3-r5")
-    fn gtp_version() -> &'static str;
+    fn gtp_version(&self) -> String;
 
     // Any function returning a GTPError that it is not supposed
     // to return will be fatal to the framework.
@@ -114,7 +114,7 @@ pub trait GoBot {
     fn gtp_time_settings(&mut self, main_time: int, byoyomi_time: int, byoyomi_stones: int) -> Result<(), GTPError> {
         Err(NotImplemented)
     }
-    // final_status_list : returns a slice to the list of stones of 
+    // final_status_list : returns a slice to the list of stones of
     // any color in the given status, in the opinion of the bot
     // should never fail
     #[allow(unused_variable)]

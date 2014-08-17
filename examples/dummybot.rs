@@ -39,6 +39,17 @@ impl api::GoBot for DummyBot {
     fn gtp_genmove(&mut self, player: api::Colour) -> api::Move {
         api::Stone(api::Vertex::from_coords(10,10).unwrap()) // Tengen !!!
     }
+
+    fn gtp_showboard(&self) -> Result<(uint, Vec<api::Vertex>, Vec<api::Vertex>, uint, uint), api::GTPError> {
+        // a simple random board
+        Ok((19,
+         vec!(api::Vertex::from_str("B12").unwrap(),api::Vertex::from_str("J2").unwrap(),
+              api::Vertex::from_str("H8").unwrap(),api::Vertex::from_str("R18").unwrap()),
+         vec!(api::Vertex::from_str("R3").unwrap(),api::Vertex::from_str("F9").unwrap(),
+              api::Vertex::from_str("C17").unwrap()),
+         3,
+         4))
+    }
 }
 
 fn main() {

@@ -5,6 +5,7 @@ use std::io;
 pub mod api;
 mod bothandler;
 mod parsing;
+mod boarddrawer;
 
 /// This function is the mail loop of your bot.
 /// You must provide it a struct implementing the

@@ -173,7 +173,7 @@ pub trait GoBot {
     /// (boardsize, black_stones, white_stones, black_captured_count, white_captured_count).
     /// Should never fail.
     #[allow(unused_variable)]
-    fn gtp_showboard(&self) -> Result<(int, &[Vertex], &[Vertex], int, int), GTPError> {
+    fn gtp_showboard(&self) -> Result<(uint, Vec<Vertex>, Vec<Vertex>, uint, uint), GTPError> {
         Err(NotImplemented)
     }
 }

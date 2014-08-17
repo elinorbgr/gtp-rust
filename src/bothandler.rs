@@ -2,6 +2,7 @@ use std::ascii::Ascii;
 use std::string::String;
 use api;
 use parsing;
+use boarddrawer;
 
 // This struct is used to keep a record of which
 // optional commands have been implemented by
@@ -311,7 +312,10 @@ impl BotHandler {
     }
 
     fn cmd_showboard<T: api::GoBot>(&self, bot: &mut T) -> String {
-        fail!("Not Implemented.");
+        match bot.gtp_showboard(){
+            Ok((bs, b_st, w_st, b_cp, w_cp)) => boarddrawer::draw_board(bs, b_st.as_slice(), w_st.as_slice(), b_cp, w_cp),
+            _ => fail!("Unexpected error in gtp_showboard.")
+        }
     }
 
     // dispatcher
@@ -368,7 +372,7 @@ impl BotHandler {
                 true => self.cmd_final_score(bot),
                 false => (false, String::from_str("unknown command"))
             },
-            "showboard" => match self.final_status_list {
+            "showboard" => match self.showboard {
                 true => (true, self.cmd_showboard(bot)),
                 false => (false, String::from_str("unknown command"))
             },

@@ -149,7 +149,7 @@ pub trait GoBot {
     /// but the controller is supposed to enforce it.
     /// Time are give in minute, should never fail.
     #[allow(unused_variable)]
-    fn gtp_time_settings(&mut self, main_time: int, byoyomi_time: int, byoyomi_stones: int) -> Result<(), GTPError> {
+    fn gtp_time_settings(&mut self, main_time: uint, byoyomi_time: uint, byoyomi_stones: uint) -> Result<(), GTPError> {
         Err(NotImplemented)
     }
 

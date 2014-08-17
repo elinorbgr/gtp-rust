@@ -239,7 +239,23 @@ impl BotHandler {
     }
 
     fn cmd_set_free_handicap<T: api::GoBot>(&self, bot: &mut T, args: &[Ascii]) -> (bool, String) {
-        fail!("Not Implemented.");
+        let mut lst: Vec<api::Vertex> = Vec::new();
+        let mut it = args.split(|&c| { c == ' '.to_ascii()});
+        for elem in it {
+            match parsing::arg_parse_vertex(elem) {
+                Some(vrtx) => { lst.push(vrtx); }
+                _ => { return (false, String::from_str("syntax error")); }
+            }
+        }
+        if lst.len() < 2 {
+            return (false, String::from_str("bad vertex list"));
+        }
+        match bot.gtp_set_free_handicap(lst.as_slice()) {
+            Ok(()) => (true, String::new()),
+            Err(api::BadVertexList) => (false, String::from_str("bad vertex list")),
+            Err(api::BoardNotEmpty) => (false, String::from_str("board not empty")),
+            _ => fail!("Unexpected error in gtp_boardsize.")
+        }
     }
 
     fn cmd_undo<T: api::GoBot>(&self, bot: &mut T) -> (bool, String) {
@@ -251,7 +267,19 @@ impl BotHandler {
     }
 
     fn cmd_time_settings<T: api::GoBot>(&self, bot: &mut T, args: &[Ascii]) -> (bool, String) {
-        fail!("Not Implemented.");
+        let mut it = args.splitn(3, |&c| { c == ' '.to_ascii()});
+        match (it.next(), it.next(), it.next()) {
+            (Some(a), Some(b), Some(c)) => match (from_str::<uint>(a.as_str_ascii()),
+                                                  from_str::<uint>(b.as_str_ascii()),
+                                                  from_str::<uint>(c.as_str_ascii())) {
+                (Some(na), Some(nb), Some(nc)) => match bot.gtp_time_settings(na, nb, nc) {
+                    Ok(()) => (true, String::new()),
+                    Err(_) => fail!("Unexpected error in gtp_time_settings.")
+                },
+                _ => (false, String::from_str("syntax error"))
+            },
+            _ => (false, String::from_str("syntax error"))
+        }
     }
 
     fn cmd_final_status_list<T: api::GoBot>(&self, bot: &mut T, args: &[Ascii]) -> (bool,String) {

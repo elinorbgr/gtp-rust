@@ -2,6 +2,8 @@
 //! knows the go rules, he is just an example about how
 //! to implement the GoBot trait.
 
+#![allow(unused_variable)]
+
 extern crate gtprust;
 
 use gtprust::api;

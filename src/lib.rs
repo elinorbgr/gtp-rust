@@ -1,5 +1,7 @@
 #![crate_type = "lib"]
 
+use std::io;
+
 pub mod api;
 mod bothandler;
 mod parsing;
@@ -10,11 +12,12 @@ mod parsing;
 #[allow(dead_code)]
 pub fn main_loop<T: api::GoBot>(bot: &mut T) {
     let handler = bothandler::BotHandler::from_bot(bot);
-    let mut input = std::io::stdio::stdin();
-    let mut output = std::io::stdio::stdout();
+    let mut input = io::stdio::stdin();
+    let mut output = io::stdio::stdout();
     loop {
         let line: String = match input.read_line() {
             Ok(txt) => txt,
+            Err(io::IoError{kind: io::EndOfFile, desc: _, detail: _}) => String::from_str("quit"),
             Err(_) => fail!("IO error.")
         };
         // convert line to ascii slice

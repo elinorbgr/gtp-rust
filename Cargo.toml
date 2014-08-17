@@ -1,9 +1,9 @@
 [package]
 name = "GTP-Rust"
-version = "0.0.1-pre"
+version = "0.1.0"
 authors = [ "victor.berger@m4x.org" ]
 
-[[lib]]
+[lib]
 name = "gtprust"
 
 [[example]]

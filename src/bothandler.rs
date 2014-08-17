@@ -189,6 +189,7 @@ impl BotHandler {
     // optional functions, should not be called
     // if the bot does not implement their conterpart
 
+    #[allow(unused_variable)]
     fn cmd_loadsgf<T: api::GoBot>(&self, bot: &mut T, args: &[Ascii]) -> (bool, String) {
         fail!("Not Implemented.");
     }

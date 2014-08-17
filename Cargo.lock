@@ -1,4 +1,4 @@
 [root]
 name = "GTP-Rust"
-version = "0.0.1-pre"
+version = "0.1.0"
 

@@ -118,7 +118,7 @@ pub enum Argument {
     ArgStoneStatus(api::StoneStatus)
 }
 
-fn arg_parse_colour (input: &[Ascii]) -> Option<api::Colour> {
+pub fn arg_parse_colour (input: &[Ascii]) -> Option<api::Colour> {
     match input.to_lower().as_slice().as_str_ascii() {
         "w" | "white" => Some(api::White),
         "b" | "black" => Some(api::Black),
@@ -126,11 +126,11 @@ fn arg_parse_colour (input: &[Ascii]) -> Option<api::Colour> {
     }
 }
 
-fn arg_parse_vertex (input: &[Ascii]) -> Option<api::Vertex> {
+pub fn arg_parse_vertex (input: &[Ascii]) -> Option<api::Vertex> {
     api::Vertex::from_str(input.as_str_ascii())
 }
 
-fn arg_parse_move (input: &[Ascii]) -> Option<api::Move> {
+pub fn arg_parse_move (input: &[Ascii]) -> Option<api::Move> {
     match input.to_lower().as_slice().as_str_ascii() {
         "pass" => Some(api::Pass),
         "resign" => Some(api::Resign),
@@ -141,7 +141,7 @@ fn arg_parse_move (input: &[Ascii]) -> Option<api::Move> {
     }
 }
 
-fn arg_parse_stone_status (input: &[Ascii]) -> Option<api::StoneStatus> {
+pub fn arg_parse_stone_status (input: &[Ascii]) -> Option<api::StoneStatus> {
     match input.to_lower().as_slice().as_str_ascii() {
         "alive" => Some(api::Alive),
         "dead" => Some(api::Dead),

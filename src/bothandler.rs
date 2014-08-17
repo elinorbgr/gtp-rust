@@ -179,11 +179,8 @@ impl BotHandler {
     }
 
     fn cmd_genmove<T: api::GoBot>(&self, bot: &mut T, args: &[Ascii]) -> (bool, String) {
-        match parsing::parse_args(args, [parsing::ColourArg]) {
-            Some(vect) => match vect[0] {
-                parsing::ArgColour(col) => (true, bot.gtp_genmove(col).to_string()),
-                _ => unreachable!()
-            },
+        match parsing::arg_parse_colour(args) {
+            Some(col) => (true, bot.gtp_genmove(col).to_string()),
             None => (false, String::from_str("syntax error"))
         }
     }
@@ -196,13 +193,10 @@ impl BotHandler {
     }
 
     fn cmd_reg_genmove<T: api::GoBot>(&self, bot: &mut T, args: &[Ascii]) -> (bool, String) {
-        match parsing::parse_args(args, [parsing::ColourArg]) {
-            Some(vect) => match vect[0] {
-                parsing::ArgColour(col) => match bot.gtp_genmove_regression(col) {
-                    Ok(mv) => (true, mv.to_string()),
-                    _ => fail!("Unexpected error in gtp_reg_genmove.")
-                },
-                _ => unreachable!()
+        match parsing::arg_parse_colour(args) {
+            Some(col) => match bot.gtp_genmove_regression(col) {
+                Ok(mv) => (true, mv.to_string()),
+                _ => fail!("Unexpected error in gtp_reg_genmove.")
             },
             None => (false, String::from_str("syntax error"))
         }
@@ -261,19 +255,16 @@ impl BotHandler {
     }
 
     fn cmd_final_status_list<T: api::GoBot>(&self, bot: &mut T, args: &[Ascii]) -> (bool,String) {
-        match parsing::parse_args(args, [parsing::StoneStatusArg]) {
-            Some(vect) => match vect[0] {
-                parsing::ArgStoneStatus(st) => match bot.gtp_final_status_list(st) {
-                    Ok(lst) => {
-                        let mut output = String::new();
-                        for &vrtx in lst.iter() {
-                            output = output.append(vrtx.to_string().as_slice());
-                        }
-                        (true, output)
-                    },
-                    _ => fail!("Unexpected error in gtp_final_status_list.")
+        match parsing::arg_parse_stone_status(args) {
+            Some(st) => match bot.gtp_final_status_list(st) {
+                Ok(lst) => {
+                    let mut output = String::new();
+                    for &vrtx in lst.iter() {
+                        output = output.append(vrtx.to_string().as_slice());
+                    }
+                    (true, output)
                 },
-                _ => unreachable!()
+                _ => fail!("Unexpected error in gtp_final_status_list.")
             },
             None => (false, String::from_str("syntax error"))
         }

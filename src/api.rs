@@ -176,6 +176,24 @@ pub trait GoBot {
     fn gtp_showboard(&self) -> Result<(uint, Vec<Vertex>, Vec<Vertex>, uint, uint), GTPError> {
         Err(NotImplemented)
     }
+
+    /// Allow you to handle custom commands. Returns (succes, output).
+    #[allow(unused_variable)]
+    fn gtp_custom_command(&mut self, command: &str, args: &str) -> (bool, String) {
+        (false, String::from_str("invalid command"))
+    }
+
+    /// Returns true if the given custom command is known.
+    #[allow(unused_variable)]
+    fn gtp_known_custom_command(&self, command: &str) -> bool {
+        false
+    }
+
+    /// Returns the list of you custom commands.
+    #[allow(unused_variable)]
+    fn gtp_list_custom_commands(&self) -> Vec<String> {
+        Vec::new()
+    }
 }
 
 // Vertex implementation for messing with strings

@@ -90,7 +90,7 @@ impl BotHandler {
 
     // implementations of GTP commands
 
-    fn cmd_list_commands(&self) -> String {
+    fn cmd_list_commands<T: api::GoBot>(&self, bot: &T) -> String {
         let mut list = String::from_str(basic_command_list);
         if self.genmove_regression {
             //list = list.append("\nreg_genmove\nload_sgf");
@@ -120,10 +120,13 @@ impl BotHandler {
         if self.showboard {
             list = list.append("\nshowboard");
         }
+        for cmd in bot.gtp_list_custom_commands().iter() {
+            list = list.append("\n").append(cmd.as_slice());
+        }
         list
     }
 
-    fn cmd_known_command(&self, cmd: &[Ascii]) -> String {
+    fn cmd_known_command<T: api::GoBot>(&self, bot: &T, cmd: &[Ascii]) -> String {
         format!("{:b}", match cmd.as_str_ascii() {
             "protocol_version" | "name" | "version" |
             "known_command" | "list_commands" | "quit" |
@@ -139,7 +142,7 @@ impl BotHandler {
             "final_status_list" => self.final_status_list,
             "final_score" => self.final_score,
             "showboard" => self.showboard,
-            _ => false
+            _ => bot.gtp_known_custom_command(cmd.as_str_ascii())
         })
     }
 
@@ -326,8 +329,8 @@ impl BotHandler {
             "protocol_version" => (true, String::from_str("2")),
             "name" => (true, bot.gtp_name()),
             "version" => (true, bot.gtp_version()),
-            "known_command" => (true, self.cmd_known_command(args)),
-            "list_commands" => (true, self.cmd_list_commands()),
+            "known_command" => (true, self.cmd_known_command(bot, args)),
+            "list_commands" => (true, self.cmd_list_commands(bot)),
             "boardsize" => self.cmd_boardsize(bot, args),
             "clear_board" => {self.cmd_clear_board(bot); (true, String::new())},
             "komi" => self.cmd_komi(bot, args),
@@ -377,7 +380,7 @@ impl BotHandler {
                 true => (true, self.cmd_showboard(bot)),
                 false => (false, String::from_str("unknown command"))
             },
-            _ => (false, String::from_str("unknown command"))
+            _ => bot.gtp_custom_command(cmd.as_str_ascii(), args.as_str_ascii())
         }
     }
     // public functions

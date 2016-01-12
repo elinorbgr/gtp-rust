@@ -1,6 +1,6 @@
 #![crate_type = "lib"]
 
-use std::io;
+use std::io::Write;
 
 pub mod api;
 mod bothandler;
@@ -13,22 +13,18 @@ mod boarddrawer;
 #[allow(dead_code)]
 pub fn main_loop<T: api::GoBot>(bot: &mut T) {
     let handler = bothandler::BotHandler::from_bot(bot);
-    let mut input = io::stdio::stdin();
-    let mut output = io::stdio::stdout();
+    let input = std::io::stdin();
+    let mut output = std::io::stdout();
     loop {
-        let line: String = match input.read_line() {
-            Ok(txt) => txt,
-            Err(io::IoError{kind: io::EndOfFile, desc: _, detail: _}) => String::from_str("quit"),
-            Err(_) => fail!("IO error.")
+        let mut line = String::new();
+        match input.read_line(&mut line) {
+            Ok(0) => { line = "quit".to_string() },
+            Ok(_) => (),
+            Err(_) => panic!("IO error.")
         };
-        // convert line to ascii slice
-        let ascii_input: Vec<Ascii> = match line.as_slice().to_ascii_opt() {
-            Some(txt) => Vec::from_slice(txt),
-            None => vec!('#'.to_ascii())
-        };
-        let (continue_loop, result) = handler.handle_command(bot, ascii_input.as_slice());
-        match output.write(result.append("\n\n").as_bytes()) {
-            Err(_) => fail!("IO error."),
+        let (continue_loop, result) = handler.handle_command(bot, &line);
+        match output.write((result + "\n\n").as_bytes()) {
+            Err(_) => panic!("IO error."),
             _ => {}
         }
         if !continue_loop {

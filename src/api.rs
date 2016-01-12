@@ -2,12 +2,13 @@
 //! your bot algorithm with the GTPv2 protocol.
 //! Your main task will be to implement the GoBot trait.
 
+use std::str::FromStr;
 use std::vec::Vec;
 
 /// Contains all the possible errors your bot
 /// may return to the library.
 /// Be careful, any callback returning an error it is not
-/// supposed to will cause the lib to `fail!()`.
+/// supposed to will cause the lib to `panic!()`.
 pub enum GTPError {
     NotImplemented,
     InvalidBoardSize,
@@ -19,7 +20,7 @@ pub enum GTPError {
 }
 
 /// Represents a player, Black or White.
-#[deriving(PartialEq,Show)]
+#[derive(PartialEq, Debug, Clone, Copy)]
 pub enum Colour {
     Black,
     White
@@ -27,14 +28,14 @@ pub enum Colour {
 
 /// Represents a vertex of the board.
 /// Note that board size is at most 25x25.
-#[deriving(PartialEq,Show)]
+#[derive(PartialEq, Debug, Clone, Copy)]
 pub struct Vertex {
     x: u8, // letter
     y: u8  // number
 }
 
 /// Represents a move, either placing a stone, passing or resigning.
-#[deriving(PartialEq,Show)]
+#[derive(PartialEq, Debug, Clone, Copy)]
 pub enum Move {
     Stone(Vertex),
     Pass,
@@ -42,14 +43,14 @@ pub enum Move {
 }
 
 /// Represents a move associated with a player.
-#[deriving(PartialEq,Show)]
+#[derive(PartialEq, Debug, Clone, Copy)]
 pub struct ColouredMove {
     pub player: Colour,
-    pub move: Move
+    pub mov: Move
 }
 
 /// The status of a stone : alive, dead or seki.
-#[deriving(PartialEq,Show)]
+#[derive(PartialEq, Debug, Clone, Copy)]
 pub enum StoneStatus {
     Alive,
     Seki,
@@ -83,12 +84,12 @@ pub trait GoBot {
     /// Sets the board size.
     /// Returns `Err(InvalidBoardSize)` if the size is not supported.
     /// The protocol cannot handle board sizes > 25x25.
-    fn gtp_boardsize(&mut self, size: uint) -> Result<(), GTPError>;
+    fn gtp_boardsize(&mut self, size: usize) -> Result<(), GTPError>;
 
     /// Plays the provided move on the board.
     /// Returns `Err(InvalidMove)` is the move is invalid.
     /// The protocol does not forbid the same player player twice in a row.
-    fn gtp_play(&mut self, move: ColouredMove) -> Result<(), GTPError>;
+    fn gtp_play(&mut self, mov: ColouredMove) -> Result<(), GTPError>;
 
     /// Ask the bot for a move for the chose player.
     /// Cannot fail, the bot must provide a move even if the last
@@ -104,93 +105,89 @@ pub trait GoBot {
     /// Asks the bot for a move for the chosen player.
     /// Must be deterministic, and must not actually play the move.
     /// Should always return `Ok(Move)`, never raise any error.
-    #[allow(unused_variable)]
+    #[allow(unused_variables)]
     fn gtp_genmove_regression(&self, player: Colour) -> Result<Move, GTPError> {
-        Err(NotImplemented)
+        Err(GTPError::NotImplemented)
     }
 
     /// Undo last move if possible.
     /// If not, return `Err(CannotUndo)`.
     /// If undo is never possible, should not be implemented.
-    #[allow(unused_variable)]
     fn gtp_undo(&mut self) -> Result<(), GTPError> {
-        Err(NotImplemented)
+        Err(GTPError::NotImplemented)
     }
     /// The bot places handicap stones for black
     /// according to pre-defined patterns, see specification of GTPv2.
     /// Returns a vertex of choosen stones.
     /// Can fail with `Err(boardNotEmpty)`.
     /// The library garanties `number` will always be between 2 and 9 included.
-    #[allow(unused_variable)]
-    fn gtp_fixed_handicap(&mut self, number: uint) -> Result<Vec<Vertex>, GTPError> {
-        Err(NotImplemented)
+    #[allow(unused_variables)]
+    fn gtp_fixed_handicap(&mut self, number: usize) -> Result<Vec<Vertex>, GTPError> {
+        Err(GTPError::NotImplemented)
     }
 
     /// The bot places its handicap stones
     /// and returns a vector of Vertexes.
     /// It can place less stones if the asked number is too high.
-    /// Can fail with `Err(BoardNotEmpty)` if board isn't empty
-    #[allow(unused_variable)]
-    fn gtp_place_free_handicap(&mut self, number: uint) -> Result<Vec<Vertex>, GTPError> {
-        Err(NotImplemented)
+    /// Can fail with `Err(apt::GTPError::BoardNotEmpty)` if board isn't empty
+    #[allow(unused_variables)]
+    fn gtp_place_free_handicap(&mut self, number: usize) -> Result<Vec<Vertex>, GTPError> {
+        Err(GTPError::NotImplemented)
     }
 
     /// Uses the provided list as handicap stones for black.
-    /// Fails with `Err(BoardNotEmpty)` if board isn't empty.
+    /// Fails with `Err(apt::GTPError::BoardNotEmpty)` if board isn't empty.
     /// Fails with `Err(BadVertexList)` if the vertex list is unusable
     /// (two stones at the same place, or stones outside the board).
-    #[allow(unused_variable)]
+    #[allow(unused_variables)]
     fn gtp_set_free_handicap(&mut self, stones: &[Vertex]) -> Result<(), GTPError> {
-        Err(NotImplemented)
+        Err(GTPError::NotImplemented)
     }
 
     /// Sets the time settings for the game.
     /// It is only informative, the bot should count it's own time,
     /// but the controller is supposed to enforce it.
     /// Time are give in minute, should never fail.
-    #[allow(unused_variable)]
-    fn gtp_time_settings(&mut self, main_time: uint, byoyomi_time: uint, byoyomi_stones: uint) -> Result<(), GTPError> {
-        Err(NotImplemented)
+    #[allow(unused_variables)]
+    fn gtp_time_settings(&mut self, main_time: usize, byoyomi_time: usize, byoyomi_stones: usize) -> Result<(), GTPError> {
+        Err(GTPError::NotImplemented)
     }
 
     /// Returns a vector of stones of both color in the given status,
     /// in the opinion of the bot.
     /// Should never fail.
-    #[allow(unused_variable)]
+    #[allow(unused_variables)]
     fn gtp_final_status_list(&self, status: StoneStatus) -> Result<Vec<Vertex>, GTPError> {
-        Err(NotImplemented)
+        Err(GTPError::NotImplemented)
     }
 
     /// Computes the bot's calculation of the final score.
     /// If it is a draw, float value must be 0 and colour is not important.
     /// Can fail with èErr(CannotScore)`.
-    #[allow(unused_variable)]
     fn gtp_final_score(&self) -> Result<(f32, Colour), GTPError> {
-        Err(NotImplemented)
+        Err(GTPError::NotImplemented)
     }
 
     /// Returns a description of the board as saw by the bot :
     /// (boardsize, black_stones, white_stones, black_captured_count, white_captured_count).
     /// Should never fail.
-    #[allow(unused_variable)]
-    fn gtp_showboard(&self) -> Result<(uint, Vec<Vertex>, Vec<Vertex>, uint, uint), GTPError> {
-        Err(NotImplemented)
+    fn gtp_showboard(&self) -> Result<(usize, Vec<Vertex>, Vec<Vertex>, usize, usize), GTPError> {
+        Err(GTPError::NotImplemented)
     }
 
     /// Allow you to handle custom commands. Returns (succes, output).
-    #[allow(unused_variable)]
+    #[allow(unused_variables)]
     fn gtp_custom_command(&mut self, command: &str, args: &str) -> (bool, String) {
-        (false, String::from_str("invalid command"))
+        (false, "invalid command".to_string())
     }
 
     /// Returns true if the given custom command is known.
-    #[allow(unused_variable)]
+    #[allow(unused_variables)]
     fn gtp_known_custom_command(&self, command: &str) -> bool {
         false
     }
 
     /// Returns the list of you custom commands.
-    #[allow(unused_variable)]
     fn gtp_list_custom_commands(&self) -> Vec<String> {
         Vec::new()
     }
@@ -222,10 +219,10 @@ impl Vertex {
         if x > 9 {
             x -= 1;
         } // eliminate 'I'
-        let number = from_str::<u8>(text.slice_from(1));
+        let number = u8::from_str(&text[1..]);
         let mut y: u8 = 0;
         match number {
-            Some(num) => y = num,
+            Ok(num) => y = num,
             _ => (),
         }
         if y == 0 || y > 25 {
@@ -248,7 +245,7 @@ impl Vertex {
         } else {
             letter += self.x-1;
         }
-        format!("{:c}{:u}", letter as char, self.y)
+        format!("{}{}", letter as char, self.y)
     }
 }
 
@@ -257,9 +254,9 @@ impl Move {
     /// GTPv2.
     pub fn to_string(&self) -> String {
         match *self {
-            Stone(vrtx) => vrtx.to_string(),
-            Pass => String::from_str("pass"),
-            Resign => String::from_str("resign")
+            Move::Stone(vrtx) => vrtx.to_string(),
+            Move::Pass => "pass".to_string(),
+            Move::Resign => "resign".to_string(),
         }
     }
 }
@@ -269,8 +266,8 @@ impl Colour {
     /// GTPv2.
     pub fn to_string(&self) -> String {
         match *self {
-            White => String::from_str("white"),
-            Black => String::from_str("black")
+            Colour::White => "white".to_string(),
+            Colour::Black => "black".to_string(),
         }
     }
 }
@@ -279,7 +276,7 @@ impl ColouredMove {
     /// Returns a string representation of the colored move compatible
     /// with GTPv2.
     pub fn to_string(&self) -> String {
-        self.player.to_string().append(self.move.to_string().as_slice())
+        self.player.to_string() + &self.mov.to_string()
     }
 }
 
@@ -288,11 +285,11 @@ mod tests {
     #[test]
     fn vertex_to_string() {
         let vrtx1 = super::Vertex::from_coords(8u8, 7u8).unwrap();
-        assert_eq!(vrtx1.to_string().as_slice(), "H7");
+        assert_eq!(&vrtx1.to_string(), "H7");
         let vrtx2 = super::Vertex::from_coords(9u8, 13u8).unwrap();
-        assert_eq!(vrtx2.to_string().as_slice(), "J13");
+        assert_eq!(&vrtx2.to_string(), "J13");
         let vrtx3 = super::Vertex::from_coords(19u8, 1u8).unwrap();
-        assert_eq!(vrtx3.to_string().as_slice(), "T1");
+        assert_eq!(&vrtx3.to_string(), "T1");
     }
 
     #[test]
@@ -306,14 +303,14 @@ mod tests {
     }
 
     #[test]
-    #[should_fail]
+    #[should_panic]
     fn too_big_coordinates() {
         let vrtx = super::Vertex::from_coords(26u8, 13u8).unwrap();
         assert_eq!(vrtx.to_coords(), (26u8, 13u8));
     }
 
     #[test]
-    #[should_fail]
+    #[should_panic]
     fn invalid_string() {
         let vrtx = super::Vertex::from_str("I13").unwrap();
         assert_eq!(vrtx.to_coords(), (9u8, 13u8));

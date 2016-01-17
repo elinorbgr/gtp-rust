@@ -70,10 +70,7 @@ fn parse_command_from_stripped(line: &str) -> Option<GTPCommand> {
             Some(text) => text,
             _ => "",
         };
-        println!("line: {}", line);
-        println!("first_part: {}", first_part);
         let id = u32::from_str(first_part);
-        println!("id: {}", id.is_ok());
         match id {
             Err(_) => { to_split = line; },
             _ => { }

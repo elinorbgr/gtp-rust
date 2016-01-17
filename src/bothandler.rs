@@ -274,7 +274,7 @@ impl BotHandler {
     }
 
     fn cmd_time_settings<T: api::GoBot>(&self, bot: &mut T, args: &str) -> (bool, String) {
-        let mut it = args.splitn(3, ' ');
+        let mut it = args.splitn(4, ' ');
         match (it.next(), it.next(), it.next()) {
             (Some(a), Some(b), Some(c)) => match (usize::from_str(a),
                                                   usize::from_str(b),

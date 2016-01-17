@@ -94,8 +94,7 @@ impl BotHandler {
     fn cmd_list_commands<T: api::GoBot>(&self, bot: &T) -> String {
         let mut list = BASIC_COMMAND_LIST.to_string();
         if self.genmove_regression {
-            //list.push_str("\nreg_genmove\nload_sgf");
-            list.push_str("\nreg_genmove");
+            list.push_str("\nreg_genmove\nloadsgf");
         }
         if self.undo {
             list.push_str("\nundo");

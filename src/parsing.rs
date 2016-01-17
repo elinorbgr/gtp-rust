@@ -77,14 +77,16 @@ fn parse_command_from_stripped(line: &str) -> Option<GTPCommand> {
         };
         let mut second_split = to_split.splitn(2, ' ');
         match second_split.next() {
-            Some(text) if text.len() > 0 => Some(GTPCommand {
-                id: id.ok(),
-                command: text.to_string(),
-                args: match second_split.next() {
-                    Some(arguments) => arguments.to_string(),
-                    _ => String::new()
-                }
-            }),
+            Some(text) if text.len() > 0 => {
+                Some(GTPCommand {
+                    id: id.ok(),
+                    command: text.to_string(),
+                    args: match second_split.next() {
+                        Some(arguments) => arguments.to_string(),
+                        _ => String::new()
+                    }
+                })
+            },
             _ => None
         }
     }
@@ -94,7 +96,7 @@ fn parse_command_from_stripped(line: &str) -> Option<GTPCommand> {
 // if inputed several lines, only the first non empty
 // and non comment is parsed
 pub fn parse_command(input: &str) -> Option<GTPCommand> {
-    match strip_input(input).splitn(1, '\n').next() {
+    match strip_input(input).splitn(2, '\n').next() {
         Some(line) => parse_command_from_stripped(line),
         _ => None
     }

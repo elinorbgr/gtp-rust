@@ -1,5 +1,6 @@
 use std::str::FromStr;
 use std::string::String;
+use std::usize;
 use api;
 use parsing;
 use boarddrawer;
@@ -194,7 +195,26 @@ impl BotHandler {
 
     #[allow(unused_variables)]
     fn cmd_loadsgf<T: api::GoBot>(&self, bot: &mut T, args: &str) -> (bool, String) {
-        panic!("Not Implemented.");
+        let error = (false, "syntax error".to_string());
+        let mut args_iter = args.splitn(3, ' ');
+        match args_iter.next() {
+            Some(filename) => {
+                let number = match args_iter.next() {
+                    Some(t) => {
+                        match usize::from_str(t) {
+                            Ok(n) => n,
+                            Err(_) => { return error },
+                        }
+                    }
+                    None => usize::MAX
+                };
+                match bot.gtp_loadsgf(filename, number) {
+                    Ok(_) => (true, String::new()),
+                    Err(_) => error,
+                }
+            }
+            None => error,
+        }
     }
 
     fn cmd_reg_genmove<T: api::GoBot>(&self, bot: &mut T, args: &str) -> (bool, String) {

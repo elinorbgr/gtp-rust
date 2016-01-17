@@ -108,7 +108,7 @@ pub enum ArgType {
     VertexArg,
     MoveArg,
     ColouredMoveArg,
-    StoneStatusArg
+    StoneStatusArg,
 }
 
 #[derive(PartialEq, Debug, Clone, Copy)]
@@ -117,7 +117,7 @@ pub enum Argument {
     ArgVertex(api::Vertex),
     ArgMove(api::Move),
     ArgColouredMove(api::ColouredMove),
-    ArgStoneStatus(api::StoneStatus)
+    ArgStoneStatus(api::StoneStatus),
 }
 
 pub fn arg_parse_colour (input: &str) -> Option<api::Colour> {
@@ -188,7 +188,7 @@ pub fn parse_args (input: &str, types: &[ArgType]) -> Option<Vec<Argument>> {
                     (Some(col), Some(mv)) => Some(Argument::ArgColouredMove(api::ColouredMove{player: col, mov: mv})),
                     _ => None
                 }
-            }
+            },
         } { // match
             Some(arg) => { vect.push(arg); },
             None => { return None; }

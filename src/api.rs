@@ -191,6 +191,11 @@ pub trait GoBot {
     fn gtp_list_custom_commands(&self) -> Vec<String> {
         Vec::new()
     }
+
+    #[allow(unused_variables)]
+    fn gtp_loadsgf(&mut self, &str, n: usize) -> Result<(), GTPError> {
+        Err(GTPError::NotImplemented)
+    }
 }
 
 // Vertex implementation for messing with strings

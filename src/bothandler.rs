@@ -132,9 +132,7 @@ impl BotHandler {
             "known_command" | "list_commands" | "quit" |
             "boardsize" | "clear_board" | "komi" |
             "play" | "genmove" => true,
-            // load_sgf will not be available in a first stage
-            // "reg_genmove" | "load_sgf" => self.genmove_regression,
-            "reg_genmove" => self.genmove_regression,
+            "reg_genmove" | "loadsgf" => self.genmove_regression,
             "undo" => self.undo,
             "place_free_handicap" => self.place_free_handicap,
             "set_free_handiciap" | "fixed_handicap" => self.set_free_handicap,

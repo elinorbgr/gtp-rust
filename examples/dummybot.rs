@@ -2,7 +2,7 @@
 //! knows the go rules, he is just an example about how
 //! to implement the GoBot trait.
 
-#![allow(unused_variable)]
+#![allow(unused_variables)]
 
 extern crate gtprust;
 
@@ -10,39 +10,39 @@ use gtprust::api;
 
 struct DummyBot;
 
-impl api::GoBot for DummyBot {
+impl api::Gtp for DummyBot {
 
-    fn gtp_name(&self) -> String {
-        String::from_str("DummyBot")
+    fn name(&self) -> String {
+        "DummyBot".to_string()
     }
 
-    fn gtp_version(&self) -> String {
-        String::from_str("v0.42")
+    fn version(&self) -> String {
+        "v0.42".to_string()
     }
 
-    fn gtp_clear_board(&mut self) {
+    fn clear_board(&mut self) {
         // this bot has no memory
     }
 
-    fn gtp_komi(&mut self, komi: f32) {
+    fn komi(&mut self, komi: f32) {
         // what is a komi ??
     }
 
-    fn gtp_boardsize(&mut self, size: uint) -> Result<(), api::GTPError> {
+    fn boardsize(&mut self, size: usize) -> Result<(), api::GTPError> {
         // Board size ? Is it not always 19x19 ?
         Ok(())
     }
 
-    fn gtp_play(&mut self, move: api::ColouredMove) -> Result<(), api::GTPError> {
+    fn play(&mut self, mov: api::ColouredMove) -> Result<(), api::GTPError> {
         // Do whatever you want, I don't care.
         Ok(())
     }
 
-    fn gtp_genmove(&mut self, player: api::Colour) -> api::Move {
-        api::Stone(api::Vertex::from_coords(10,10).unwrap()) // Tengen !!!
+    fn genmove(&mut self, player: api::Colour) -> api::Move {
+        api::Move::Stone(api::Vertex::from_coords(10,10).unwrap()) // Tengen !!!
     }
 
-    fn gtp_showboard(&self) -> Result<(uint, Vec<api::Vertex>, Vec<api::Vertex>, uint, uint), api::GTPError> {
+    fn showboard(&self) -> Result<(usize, Vec<api::Vertex>, Vec<api::Vertex>, usize, usize), api::GTPError> {
         // a simple random board
         Ok((19,
          vec!(api::Vertex::from_str("B12").unwrap(),api::Vertex::from_str("J2").unwrap(),

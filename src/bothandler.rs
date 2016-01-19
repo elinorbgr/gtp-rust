@@ -1,5 +1,6 @@
-use std::ascii::Ascii;
+use std::str::FromStr;
 use std::string::String;
+use std::usize;
 use api;
 use parsing;
 use boarddrawer;
@@ -8,7 +9,7 @@ use boarddrawer;
 // optional commands have been implemented by
 // the bot and which haven't
 
-static basic_command_list : &'static str = "protocol_version
+static BASIC_COMMAND_LIST : &'static str = "protocol_version
 name
 version
 known_command
@@ -47,94 +48,91 @@ impl BotHandler {
         }
     }
 
-    fn populate<T: api::GoBot>(&mut self, bot: &mut T) {
-        match bot.gtp_genmove_regression(api::Black) {
-            Err(api::NotImplemented) => self.genmove_regression = false,
+    fn populate<T: api::Gtp>(&mut self, bot: &mut T) {
+        match bot.reg_genmove(api::Colour::Black) {
+            Err(api::GTPError::NotImplemented) => self.genmove_regression = false,
             _ => self.genmove_regression = true
         }
-        match bot.gtp_undo() {
-            Err(api::NotImplemented) => self.undo = false,
+        match bot.undo() {
+            Err(api::GTPError::NotImplemented) => self.undo = false,
             _ => self.undo = true
         }
-        match bot.gtp_fixed_handicap(1) {
-            Err(api::NotImplemented) => self.fixed_handicap = false,
+        match bot.fixed_handicap(1) {
+            Err(api::GTPError::NotImplemented) => self.fixed_handicap = false,
             _ => self.fixed_handicap = true
         }
-        match bot.gtp_place_free_handicap(1) {
-            Err(api::NotImplemented) => self.place_free_handicap = false,
+        match bot.place_free_handicap(1) {
+            Err(api::GTPError::NotImplemented) => self.place_free_handicap = false,
             _ => self.place_free_handicap = true
         }
-        match bot.gtp_set_free_handicap([api::Vertex::from_coords(2,2).unwrap()]) {
-            Err(api::NotImplemented) => self.set_free_handicap = false,
+        match bot.set_free_handicap(&[api::Vertex::from_coords(2,2).unwrap()]) {
+            Err(api::GTPError::NotImplemented) => self.set_free_handicap = false,
             _ => self.set_free_handicap = true
         }
-        match bot.gtp_time_settings(5, 0, 0) {
-            Err(api::NotImplemented) => self.time_settings = false,
+        match bot.time_settings(5, 0, 0) {
+            Err(api::GTPError::NotImplemented) => self.time_settings = false,
             _ => self.time_settings = true
         }
-        match bot.gtp_final_status_list(api::Alive) {
-            Err(api::NotImplemented) => self.final_status_list = false,
+        match bot.final_status_list(api::StoneStatus::Alive) {
+            Err(api::GTPError::NotImplemented) => self.final_status_list = false,
             _ => self.final_status_list = true
         }
-        match bot.gtp_final_score() {
-            Err(api::NotImplemented) => self.final_score = false,
+        match bot.final_score() {
+            Err(api::GTPError::NotImplemented) => self.final_score = false,
             _ => self.final_score = true
         }
-        match bot.gtp_showboard() {
-            Err(api::NotImplemented) => self.showboard = false,
+        match bot.showboard() {
+            Err(api::GTPError::NotImplemented) => self.showboard = false,
             _ => self.showboard = true
         }
         // lets reset the bot
-        bot.gtp_clear_board();
+        bot.clear_board();
     }
 
     // implementations of GTP commands
 
-    fn cmd_list_commands<T: api::GoBot>(&self, bot: &T) -> String {
-        let mut list = String::from_str(basic_command_list);
+    fn cmd_list_commands<T: api::Gtp>(&self, bot: &T) -> String {
+        let mut list = BASIC_COMMAND_LIST.to_string();
         if self.genmove_regression {
-            //list = list.append("\nreg_genmove\nload_sgf");
-            list = list.append("\nreg_genmove");
+            list.push_str("\nreg_genmove\nloadsgf");
         }
         if self.undo {
-            list = list.append("\nundo");
+            list.push_str("\nundo");
         }
         if self.place_free_handicap {
-            list = list.append("\nplace_free_handicap");
+            list.push_str("\nplace_free_handicap");
         }
         if self.fixed_handicap {
-            list = list.append("\nfixed_handicap");
+            list.push_str("\nfixed_handicap");
         }
         if self.set_free_handicap {
-            list = list.append("\nset_free_handicap");
+            list.push_str("\nset_free_handicap");
         }
         if self.time_settings {
-            list = list.append("\ntime_settings");
+            list.push_str("\ntime_settings");
         }
         if self.final_status_list {
-            list = list.append("\nfinal_status_list");
+            list.push_str("\nfinal_status_list");
         }
         if self.final_score {
-            list = list.append("\nfinal_score");
+            list.push_str("\nfinal_score");
         }
         if self.showboard {
-            list = list.append("\nshowboard");
+            list.push_str("\nshowboard");
         }
-        for cmd in bot.gtp_list_custom_commands().iter() {
-            list = list.append("\n").append(cmd.as_slice());
+        for cmd in bot.list_custom_commands().iter() {
+            list.push_str(&format!("\n{}", cmd));
         }
         list
     }
 
-    fn cmd_known_command<T: api::GoBot>(&self, bot: &T, cmd: &[Ascii]) -> String {
-        format!("{:b}", match cmd.as_str_ascii() {
+    fn cmd_known_command<T: api::Gtp>(&self, bot: &T, cmd: &str) -> String {
+        format!("{}", match cmd {
             "protocol_version" | "name" | "version" |
             "known_command" | "list_commands" | "quit" |
             "boardsize" | "clear_board" | "komi" |
             "play" | "genmove" => true,
-            // load_sgf will not be available in a first stage
-            // "reg_genmove" | "load_sgf" => self.genmove_regression,
-            "reg_genmove" => self.genmove_regression,
+            "reg_genmove" | "loadsgf" => self.genmove_regression,
             "undo" => self.undo,
             "place_free_handicap" => self.place_free_handicap,
             "set_free_handiciap" | "fixed_handicap" => self.set_free_handicap,
@@ -142,193 +140,214 @@ impl BotHandler {
             "final_status_list" => self.final_status_list,
             "final_score" => self.final_score,
             "showboard" => self.showboard,
-            _ => bot.gtp_known_custom_command(cmd.as_str_ascii())
+            _ => bot.known_custom_command(cmd)
         })
     }
 
-    fn cmd_boardsize<T: api::GoBot>(&self, bot: &mut T, args: &[Ascii]) -> (bool, String) {
-        match from_str::<uint>(args.as_str_ascii()) {
-            Some(n) => match bot.gtp_boardsize(n) {
+    fn cmd_boardsize<T: api::Gtp>(&self, bot: &mut T, args: &str) -> (bool, String) {
+        match usize::from_str(args) {
+            Ok(n) => match bot.boardsize(n) {
                 Ok(()) => (true, String::new()),
-                Err(api::InvalidBoardSize) => (false, String::from_str("invalid board size")),
-                _ => fail!("Unexpected error in gtp_boardsize.")
+                Err(api::GTPError::InvalidBoardSize) => (false, "invalid board size".to_string()),
+                _ => panic!("Unexpected error in gtp_boardsize.")
             },
-            None => (false, String::from_str("syntax error"))
+            Err(_) => (false, "syntax error".to_string())
         }
     }
 
-    fn cmd_clear_board<T: api::GoBot>(&self, bot: &mut T) -> () {
-        bot.gtp_clear_board();
+    fn cmd_clear_board<T: api::Gtp>(&self, bot: &mut T) -> () {
+        bot.clear_board();
     }
 
-    fn cmd_komi<T: api::GoBot>(&self, bot: &mut T, args: &[Ascii]) -> (bool, String) {
-        match from_str::<f32>(args.as_str_ascii()) {
-            Some(k) => {bot.gtp_komi(k); (true, String::new())},
-            None => (false, String::from_str("syntax error"))
+    fn cmd_komi<T: api::Gtp>(&self, bot: &mut T, args: &str) -> (bool, String) {
+        match f32::from_str(args) {
+            Ok(k) => {bot.komi(k); (true, String::new())},
+            Err(_) => (false, "syntax error".to_string()),
         }
     }
 
-    fn cmd_play<T: api::GoBot>(&self, bot: &mut T, args: &[Ascii]) -> (bool, String) {
-        match parsing::parse_args(args, [parsing::ColouredMoveArg]) {
+    fn cmd_play<T: api::Gtp>(&self, bot: &mut T, args: &str) -> (bool, String) {
+        match parsing::parse_args(args, &[parsing::ArgType::ColouredMoveArg]) {
             Some(vect) => match vect[0] {
-                parsing::ArgColouredMove(mv) => match bot.gtp_play(mv) {
+                parsing::Argument::ArgColouredMove(mv) => match bot.play(mv) {
                     Ok(()) => (true, String::new()),
-                    Err(api::InvalidMove) => (false, String::from_str("invalid move")),
-                    _ => fail!("Unexpected error in gtp_play.")
+                    Err(api::GTPError::InvalidMove) => (false, "invalid move".to_string()),
+                    _ => panic!("Unexpected error in gtp_play.")
                 },
                 _ => unreachable!() // if parse_args returns a vector, it is valid
             },
-            None => (false, String::from_str("syntax error"))
+            None => (false, "syntax error".to_string()),
         }
     }
 
-    fn cmd_genmove<T: api::GoBot>(&self, bot: &mut T, args: &[Ascii]) -> (bool, String) {
+    fn cmd_genmove<T: api::Gtp>(&self, bot: &mut T, args: &str) -> (bool, String) {
         match parsing::arg_parse_colour(args) {
-            Some(col) => (true, bot.gtp_genmove(col).to_string()),
-            None => (false, String::from_str("syntax error"))
+            Some(col) => (true, bot.genmove(col).to_string()),
+            None => (false, "syntax error".to_string()),
         }
     }
 
     // optional functions, should not be called
     // if the bot does not implement their conterpart
 
-    #[allow(unused_variable)]
-    fn cmd_loadsgf<T: api::GoBot>(&self, bot: &mut T, args: &[Ascii]) -> (bool, String) {
-        fail!("Not Implemented.");
+    #[allow(unused_variables)]
+    fn cmd_loadsgf<T: api::Gtp>(&self, bot: &mut T, args: &str) -> (bool, String) {
+        let error = (false, "syntax error".to_string());
+        let mut args_iter = args.splitn(3, ' ');
+        match args_iter.next() {
+            Some(filename) => {
+                let number = match args_iter.next() {
+                    Some(t) => {
+                        match usize::from_str(t) {
+                            Ok(n) => n,
+                            Err(_) => { return error },
+                        }
+                    }
+                    None => usize::MAX
+                };
+                match bot.loadsgf(filename, number) {
+                    Ok(_) => (true, String::new()),
+                    Err(_) => error,
+                }
+            }
+            None => error,
+        }
     }
 
-    fn cmd_reg_genmove<T: api::GoBot>(&self, bot: &mut T, args: &[Ascii]) -> (bool, String) {
+    fn cmd_reg_genmove<T: api::Gtp>(&self, bot: &mut T, args: &str) -> (bool, String) {
         match parsing::arg_parse_colour(args) {
-            Some(col) => match bot.gtp_genmove_regression(col) {
+            Some(col) => match bot.reg_genmove(col) {
                 Ok(mv) => (true, mv.to_string()),
-                _ => fail!("Unexpected error in gtp_reg_genmove.")
+                _ => panic!("Unexpected error in gtp_reg_genmove.")
             },
-            None => (false, String::from_str("syntax error"))
+            None => (false, "syntax error".to_string())
         }
     }
 
-    fn cmd_fixed_handicap<T: api::GoBot>(&self, bot: &mut T, args: &[Ascii]) -> (bool, String) {
-        match from_str::<uint>(args.as_str_ascii()) {
-            Some(n) if n >= 2 && n <= 9 => match bot.gtp_fixed_handicap(n) {
+    fn cmd_fixed_handicap<T: api::Gtp>(&self, bot: &mut T, args: &str) -> (bool, String) {
+        match usize::from_str(args) {
+            Ok(n) if n >= 2 && n <= 9 => match bot.fixed_handicap(n) {
                 Ok(vec) => (true, {
                     let mut it = vec.iter();
-                    let mut out = it.next().to_string();
-                    for &vrtx in it {
-                        out = out.append(" ").append(vrtx.to_string().as_slice());
+                    let mut out = it.next().unwrap().to_string();
+                    for vrtx in it {
+                        out.push_str(" ");
+                        out.push_str(&vrtx.to_string());
                     };
                     out }),
-                Err(api::BoardNotEmpty) => (false, String::from_str("board not empty")),
-                _ => fail!("Unexpected error in gtp_boardsize.")
+                Err(api::GTPError::BoardNotEmpty) => (false, "board not empty".to_string()),
+                _ => panic!("Unexpected error in gtp_boardsize.")
             },
-            Some(_) => (false, String::from_str("invalid number of stones")),
-            None => (false, String::from_str("syntax error"))
+            Ok(_) => (false, "invalid number of stones".to_string()),
+            Err(_) => (false, "syntax error".to_string())
         }
     }
 
-    fn cmd_place_free_handicap<T: api::GoBot>(&self, bot: &mut T,  args: &[Ascii]) -> (bool, String) {
-        match from_str::<uint>(args.as_str_ascii()) {
-            Some(n) if n >= 2 => match bot.gtp_place_free_handicap(n) {
+    fn cmd_place_free_handicap<T: api::Gtp>(&self, bot: &mut T,  args: &str) -> (bool, String) {
+        match usize::from_str(args) {
+            Ok(n) if n >= 2 => match bot.place_free_handicap(n) {
                 Ok(vec) => (true, {
                     let mut it = vec.iter();
-                    let mut out = it.next().to_string();
-                    for &vrtx in it {
-                        out = out.append(" ").append(vrtx.to_string().as_slice());
+                    let mut out = it.next().unwrap().to_string();
+                    for vrtx in it {
+                        out.push_str(" ");
+                        out.push_str(&vrtx.to_string());
                     };
                     out }),
-                Err(api::BoardNotEmpty) => (false, String::from_str("board not empty")),
-                _ => fail!("Unexpected error in gtp_boardsize.")
+                Err(api::GTPError::BoardNotEmpty) => (false, "board not empty".to_string()),
+                _ => panic!("Unexpected error in gtp_boardsize.")
             },
-            Some(_) => (false, String::from_str("invalid number of stones")),
-            None => (false, String::from_str("syntax error"))
+            Ok(_) => (false, "invalid number of stones".to_string()),
+            Err(_) => (false, "syntax error".to_string()),
         }
     }
 
-    fn cmd_set_free_handicap<T: api::GoBot>(&self, bot: &mut T, args: &[Ascii]) -> (bool, String) {
+    fn cmd_set_free_handicap<T: api::Gtp>(&self, bot: &mut T, args: &str) -> (bool, String) {
         let mut lst: Vec<api::Vertex> = Vec::new();
-        let mut it = args.split(|&c| { c == ' '.to_ascii()});
+        let it = args.split(' ');
         for elem in it {
             match parsing::arg_parse_vertex(elem) {
                 Some(vrtx) => { lst.push(vrtx); }
-                _ => { return (false, String::from_str("syntax error")); }
+                _ => { return (false, "syntax error".to_string()); }
             }
         }
         if lst.len() < 2 {
-            return (false, String::from_str("bad vertex list"));
+            return (false, "bad vertex list".to_string());
         }
-        match bot.gtp_set_free_handicap(lst.as_slice()) {
+        match bot.set_free_handicap(&lst) {
             Ok(()) => (true, String::new()),
-            Err(api::BadVertexList) => (false, String::from_str("bad vertex list")),
-            Err(api::BoardNotEmpty) => (false, String::from_str("board not empty")),
-            _ => fail!("Unexpected error in gtp_boardsize.")
+            Err(api::GTPError::BadVertexList) => (false, "bad vertex list".to_string()),
+            Err(api::GTPError::BoardNotEmpty) => (false, "board not empty".to_string()),
+            _ => panic!("Unexpected error in gtp_boardsize.")
         }
     }
 
-    fn cmd_undo<T: api::GoBot>(&self, bot: &mut T) -> (bool, String) {
-        match bot.gtp_undo() {
+    fn cmd_undo<T: api::Gtp>(&self, bot: &mut T) -> (bool, String) {
+        match bot.undo() {
             Ok(()) => (true, String::new()),
-            Err(api::CannotUndo) => (false, String::from_str("cannot undo")),
-            _ => fail!("Unexpected error in gtp_undo.")
+            Err(api::GTPError::CannotUndo) => (false, "cannot undo".to_string()),
+            _ => panic!("Unexpected error in gtp_undo.")
         }
     }
 
-    fn cmd_time_settings<T: api::GoBot>(&self, bot: &mut T, args: &[Ascii]) -> (bool, String) {
-        let mut it = args.splitn(3, |&c| { c == ' '.to_ascii()});
+    fn cmd_time_settings<T: api::Gtp>(&self, bot: &mut T, args: &str) -> (bool, String) {
+        let mut it = args.splitn(4, ' ');
         match (it.next(), it.next(), it.next()) {
-            (Some(a), Some(b), Some(c)) => match (from_str::<uint>(a.as_str_ascii()),
-                                                  from_str::<uint>(b.as_str_ascii()),
-                                                  from_str::<uint>(c.as_str_ascii())) {
-                (Some(na), Some(nb), Some(nc)) => match bot.gtp_time_settings(na, nb, nc) {
+            (Some(a), Some(b), Some(c)) => match (usize::from_str(a),
+                                                  usize::from_str(b),
+                                                  usize::from_str(c)) {
+                (Ok(na), Ok(nb), Ok(nc)) => match bot.time_settings(na, nb, nc) {
                     Ok(()) => (true, String::new()),
-                    Err(_) => fail!("Unexpected error in gtp_time_settings.")
+                    Err(_) => panic!("Unexpected error in gtp_time_settings.")
                 },
-                _ => (false, String::from_str("syntax error"))
+                _ => (false, "syntax error".to_string()),
             },
-            _ => (false, String::from_str("syntax error"))
+            _ => (false, "syntax error".to_string()),
         }
     }
 
-    fn cmd_final_status_list<T: api::GoBot>(&self, bot: &mut T, args: &[Ascii]) -> (bool,String) {
+    fn cmd_final_status_list<T: api::Gtp>(&self, bot: &mut T, args: &str) -> (bool,String) {
         match parsing::arg_parse_stone_status(args) {
-            Some(st) => match bot.gtp_final_status_list(st) {
+            Some(st) => match bot.final_status_list(st) {
                 Ok(lst) => {
                     let mut output = String::new();
-                    for &vrtx in lst.iter() {
-                        output = output.append(vrtx.to_string().as_slice());
+                    for vrtx in lst.iter() {
+                        output.push_str(&vrtx.to_string());
                     }
                     (true, output)
                 },
-                _ => fail!("Unexpected error in gtp_final_status_list.")
+                _ => panic!("Unexpected error in gtp_final_status_list.")
             },
-            None => (false, String::from_str("syntax error"))
+            None => (false, "syntax error".to_string())
         }
     }
 
-    fn cmd_final_score<T: api::GoBot>(&self, bot: &mut T) -> (bool, String) {
-        match bot.gtp_final_score() {
+    fn cmd_final_score<T: api::Gtp>(&self, bot: &mut T) -> (bool, String) {
+        match bot.final_score() {
             Ok(val) => match val {
-                (0.0, _) => (true, String::from_str("0")),
-                (x, api::White) => (true, format!("w+{}", x)),
-                (x, api::Black) => (true, format!("b+{}", x))
+                (0.0, _) => (true, "0".to_string()),
+                (x, api::Colour::White) => (true, format!("w+{}", x)),
+                (x, api::Colour::Black) => (true, format!("b+{}", x))
                 },
-            Err(api::CannotScore) => (false, String::from_str("cannot score")),
-            _ => fail!("Unexpected error in gtp_final_score.")
+            Err(api::GTPError::CannotScore) => (false, "cannot score".to_string()),
+            _ => panic!("Unexpected error in gtp_final_score.")
         }
     }
 
-    fn cmd_showboard<T: api::GoBot>(&self, bot: &mut T) -> String {
-        match bot.gtp_showboard(){
-            Ok((bs, b_st, w_st, b_cp, w_cp)) => boarddrawer::draw_board(bs, b_st.as_slice(), w_st.as_slice(), b_cp, w_cp),
-            _ => fail!("Unexpected error in gtp_showboard.")
+    fn cmd_showboard<T: api::Gtp>(&self, bot: &mut T) -> String {
+        match bot.showboard(){
+            Ok((bs, b_st, w_st, b_cp, w_cp)) => boarddrawer::draw_board(bs, &b_st, &w_st, b_cp, w_cp),
+            _ => panic!("Unexpected error in gtp_showboard.")
         }
     }
 
     // dispatcher
 
-    fn dispatch_cmd<T: api::GoBot>(&self, bot: &mut T, cmd: &[Ascii], args: &[Ascii]) -> (bool, String) {
-        match cmd.as_str_ascii() {
-            "protocol_version" => (true, String::from_str("2")),
-            "name" => (true, bot.gtp_name()),
-            "version" => (true, bot.gtp_version()),
+    fn dispatch_cmd<T: api::Gtp>(&self, bot: &mut T, cmd: &str, args: &str) -> (bool, String) {
+        match cmd {
+            "protocol_version" => (true, "2".to_string()),
+            "name" => (true, bot.name()),
+            "version" => (true, bot.version()),
             "known_command" => (true, self.cmd_known_command(bot, args)),
             "list_commands" => (true, self.cmd_list_commands(bot)),
             "boardsize" => self.cmd_boardsize(bot, args),
@@ -338,73 +357,73 @@ impl BotHandler {
             "genmove" => self.cmd_genmove(bot, args),
             "loadsgf" => match self.genmove_regression {
                 true => self.cmd_loadsgf(bot, args),
-                false => (false, String::from_str("unknown command"))
+                false => (false, "unknown command".to_string())
             },
             "reg_genmove" => match self.genmove_regression {
                 true => self.cmd_reg_genmove(bot, args),
-                false => (false, String::from_str("unknown command"))
+                false => (false, "unknown command".to_string())
             },
             "fixed_handicap" => match self.set_free_handicap {
                 true => self.cmd_fixed_handicap(bot, args),
-                false => (false, String::from_str("unknown command"))
+                false => (false, "unknown command".to_string())
             },
             "set_free_handicap" => match self.set_free_handicap {
                 true => self.cmd_set_free_handicap(bot, args),
-                false => (false, String::from_str("unknown command"))
+                false => (false, "unknown command".to_string())
             },
             "place_free_handicap" => match self.place_free_handicap {
                 true => self.cmd_place_free_handicap(bot, args),
-                false => (false, String::from_str("unknown command"))
+                false => (false, "unknown command".to_string())
             },
             "undo" => match self.undo {
                 true => self.cmd_undo(bot),
-                false => (false, String::from_str("unknown command"))
+                false => (false, "unknown command".to_string())
             },
             "time_settings" => match self.time_settings {
                 true => self.cmd_time_settings(bot, args),
-                false => (false, String::from_str("unknown command"))
+                false => (false, "unknown command".to_string())
             },
             "time_left" => match self.genmove_regression {
                 true => (true, String::new()), // noop for now
-                false => (false, String::from_str("unknown command"))
+                false => (false, "unknown command".to_string())
             },
             "final_status_list" => match self.final_status_list {
                 true => self.cmd_final_status_list(bot, args),
-                false => (false, String::from_str("unknown command"))
+                false => (false, "unknown command".to_string())
             },
             "final_score" => match self.final_score {
                 true => self.cmd_final_score(bot),
-                false => (false, String::from_str("unknown command"))
+                false => (false, "unknown command".to_string())
             },
             "showboard" => match self.showboard {
                 true => (true, self.cmd_showboard(bot)),
-                false => (false, String::from_str("unknown command"))
+                false => (false, "unknown command".to_string())
             },
-            _ => bot.gtp_custom_command(cmd.as_str_ascii(), args.as_str_ascii())
+            _ => bot.custom_command(cmd, args)
         }
     }
     // public functions
 
-    pub fn from_bot<T: api::GoBot>(bot: &mut T) -> BotHandler {
+    pub fn from_bot<T: api::Gtp>(bot: &mut T) -> BotHandler {
         let mut handler = BotHandler::new();
         handler.populate(bot);
         handler
     }
 
-    // handles content from ascii input
+    // handles content from AsciiExt input
     // will parse and execute the first command encountered only
     // do nothing if no command is found
-    pub fn handle_command<T: api::GoBot>(&self, bot: &mut T, input: &[Ascii]) -> (bool, String) {
+    pub fn handle_command<T: api::Gtp>(&self, bot: &mut T, input: &str) -> (bool, String) {
         match parsing::parse_command(input) {
-            Some(parsing::GTPCommand{id: id, command: command, args: args}) => {
-                if command.as_slice().as_str_ascii() == "quit" {
-                    (false, format!("={:s} bye",
-                        match id {Some(i) => format!("{:u}", i), _ => String::new()}))
+            Some(parsing::GTPCommand{id, command, args}) => {
+                if command == "quit" {
+                    (false, format!("={} bye",
+                        match id {Some(i) => format!("{}", i), _ => String::new()}))
                 } else {
-                    let (result, output) = self.dispatch_cmd(bot, command.as_slice(), args.as_slice());
-                    (true, format!("{:c}{:s} {:s}",
+                    let (result, output) = self.dispatch_cmd(bot, &command, &args);
+                    (true, format!("{}{} {}",
                         match result {true => '=', false => '?'},
-                        match id {Some(i) => format!("{:u}", i), _ => String::new()},
+                        match id {Some(i) => format!("{}", i), _ => String::new()},
                         output))
                     }
                 },
@@ -412,4 +431,3 @@ impl BotHandler {
         }
     }
 }
-

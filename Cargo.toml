@@ -1,6 +1,6 @@
 [package]
 name = "GTP-Rust"
-version = "0.2.0"
+version = "0.3.0"
 authors = [ "victor.berger@m4x.org", "ichikawa.yuji@gmail.com" ]
 
 [lib]

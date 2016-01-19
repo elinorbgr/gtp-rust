@@ -62,13 +62,13 @@ pub enum StoneStatus {
 /// to the optionnal commands of the protocol. If you want to
 /// implement them, simply override them. If you do not, the library
 /// will not report them as available.
-pub trait GoBot {
+pub trait Gtp {
 
     /// The name of your bot (ex : "My super Bot")
-    fn gtp_name(&self) -> String;
+    fn name(&self) -> String;
 
     /// The version of your bot (ex : "v2.3-r5")
-    fn gtp_version(&self) -> String;
+    fn version(&self) -> String;
 
     // Any function returning a GTPError that it is not supposed
     // to return will be fatal to the framework.
@@ -76,26 +76,26 @@ pub trait GoBot {
     // Basic functions, must be implemented
 
     /// Clears the board, can never fail.
-    fn gtp_clear_board(&mut self) -> ();
+    fn clear_board(&mut self) -> ();
 
     /// Sets the komi, can never fail, must accept absurd values.
-    fn gtp_komi(&mut self, komi: f32) -> ();
+    fn komi(&mut self, komi: f32) -> ();
 
     /// Sets the board size.
     /// Returns `Err(InvalidBoardSize)` if the size is not supported.
     /// The protocol cannot handle board sizes > 25x25.
-    fn gtp_boardsize(&mut self, size: usize) -> Result<(), GTPError>;
+    fn boardsize(&mut self, size: usize) -> Result<(), GTPError>;
 
     /// Plays the provided move on the board.
     /// Returns `Err(InvalidMove)` is the move is invalid.
     /// The protocol does not forbid the same player player twice in a row.
-    fn gtp_play(&mut self, mov: ColouredMove) -> Result<(), GTPError>;
+    fn play(&mut self, mov: ColouredMove) -> Result<(), GTPError>;
 
     /// Ask the bot for a move for the chose player.
     /// Cannot fail, the bot must provide a move even if the last
     /// played move is of the same colour.
     /// Plays the move in the internal representation of the game of the bot.
-    fn gtp_genmove(&mut self, player: Colour) -> Move;
+    fn genmove(&mut self, player: Colour) -> Move;
 
     // Optional functions, if not iplemented, the corresponding
     // commands will not be activated
@@ -106,14 +106,14 @@ pub trait GoBot {
     /// Must be deterministic, and must not actually play the move.
     /// Should always return `Ok(Move)`, never raise any error.
     #[allow(unused_variables)]
-    fn gtp_genmove_regression(&self, player: Colour) -> Result<Move, GTPError> {
+    fn reg_genmove(&self, player: Colour) -> Result<Move, GTPError> {
         Err(GTPError::NotImplemented)
     }
 
     /// Undo last move if possible.
     /// If not, return `Err(CannotUndo)`.
     /// If undo is never possible, should not be implemented.
-    fn gtp_undo(&mut self) -> Result<(), GTPError> {
+    fn undo(&mut self) -> Result<(), GTPError> {
         Err(GTPError::NotImplemented)
     }
     /// The bot places handicap stones for black
@@ -122,7 +122,7 @@ pub trait GoBot {
     /// Can fail with `Err(boardNotEmpty)`.
     /// The library garanties `number` will always be between 2 and 9 included.
     #[allow(unused_variables)]
-    fn gtp_fixed_handicap(&mut self, number: usize) -> Result<Vec<Vertex>, GTPError> {
+    fn fixed_handicap(&mut self, number: usize) -> Result<Vec<Vertex>, GTPError> {
         Err(GTPError::NotImplemented)
     }
 
@@ -131,7 +131,7 @@ pub trait GoBot {
     /// It can place less stones if the asked number is too high.
     /// Can fail with `Err(apt::GTPError::BoardNotEmpty)` if board isn't empty
     #[allow(unused_variables)]
-    fn gtp_place_free_handicap(&mut self, number: usize) -> Result<Vec<Vertex>, GTPError> {
+    fn place_free_handicap(&mut self, number: usize) -> Result<Vec<Vertex>, GTPError> {
         Err(GTPError::NotImplemented)
     }
 
@@ -140,7 +140,7 @@ pub trait GoBot {
     /// Fails with `Err(BadVertexList)` if the vertex list is unusable
     /// (two stones at the same place, or stones outside the board).
     #[allow(unused_variables)]
-    fn gtp_set_free_handicap(&mut self, stones: &[Vertex]) -> Result<(), GTPError> {
+    fn set_free_handicap(&mut self, stones: &[Vertex]) -> Result<(), GTPError> {
         Err(GTPError::NotImplemented)
     }
 
@@ -149,7 +149,7 @@ pub trait GoBot {
     /// but the controller is supposed to enforce it.
     /// Time are give in minute, should never fail.
     #[allow(unused_variables)]
-    fn gtp_time_settings(&mut self, main_time: usize, byoyomi_time: usize, byoyomi_stones: usize) -> Result<(), GTPError> {
+    fn time_settings(&mut self, main_time: usize, byoyomi_time: usize, byoyomi_stones: usize) -> Result<(), GTPError> {
         Err(GTPError::NotImplemented)
     }
 
@@ -157,43 +157,43 @@ pub trait GoBot {
     /// in the opinion of the bot.
     /// Should never fail.
     #[allow(unused_variables)]
-    fn gtp_final_status_list(&self, status: StoneStatus) -> Result<Vec<Vertex>, GTPError> {
+    fn final_status_list(&self, status: StoneStatus) -> Result<Vec<Vertex>, GTPError> {
         Err(GTPError::NotImplemented)
     }
 
     /// Computes the bot's calculation of the final score.
     /// If it is a draw, float value must be 0 and colour is not important.
     /// Can fail with èErr(CannotScore)`.
-    fn gtp_final_score(&self) -> Result<(f32, Colour), GTPError> {
+    fn final_score(&self) -> Result<(f32, Colour), GTPError> {
         Err(GTPError::NotImplemented)
     }
 
     /// Returns a description of the board as saw by the bot :
     /// (boardsize, black_stones, white_stones, black_captured_count, white_captured_count).
     /// Should never fail.
-    fn gtp_showboard(&self) -> Result<(usize, Vec<Vertex>, Vec<Vertex>, usize, usize), GTPError> {
+    fn showboard(&self) -> Result<(usize, Vec<Vertex>, Vec<Vertex>, usize, usize), GTPError> {
         Err(GTPError::NotImplemented)
     }
 
     /// Allow you to handle custom commands. Returns (succes, output).
     #[allow(unused_variables)]
-    fn gtp_custom_command(&mut self, command: &str, args: &str) -> (bool, String) {
+    fn custom_command(&mut self, command: &str, args: &str) -> (bool, String) {
         (false, "invalid command".to_string())
     }
 
     /// Returns true if the given custom command is known.
     #[allow(unused_variables)]
-    fn gtp_known_custom_command(&self, command: &str) -> bool {
+    fn known_custom_command(&self, command: &str) -> bool {
         false
     }
 
     /// Returns the list of you custom commands.
-    fn gtp_list_custom_commands(&self) -> Vec<String> {
+    fn list_custom_commands(&self) -> Vec<String> {
         Vec::new()
     }
 
     #[allow(unused_variables)]
-    fn gtp_loadsgf(&mut self, &str, n: usize) -> Result<(), GTPError> {
+    fn loadsgf(&mut self, &str, n: usize) -> Result<(), GTPError> {
         Err(GTPError::NotImplemented)
     }
 }
